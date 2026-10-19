@@ -4,7 +4,11 @@ import { STAT_KEYS, type Pokemon, type StatKey } from './types';
 const API_BASE = 'https://pokeapi.co/api/v2';
 const ONE_DAY = 60 * 60 * 24;
 /** Requests in flight at once - PokeAPI is free, so be polite. */
-const BATCH_SIZE = 20;
+const BATCH_SIZE = 10;
+/** Attempts per Pokémon before giving up (1 try + 3 retries). */
+const MAX_ATTEMPTS = 4;
+/** A request that hangs longer than this is aborted and retried. */
+const TIMEOUT_MS = 15_000;
 
 // Only the fields we read. The real response is much larger (moves, games...).
 interface ApiPokemon {
@@ -35,10 +39,41 @@ function toPokemon(raw: ApiPokemon): Pokemon {
   };
 }
 
+/** Thrown for responses that will never succeed, like a 404, so we don't retry them. */
+class PermanentError extends Error {}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Fetch one Pokémon, retrying transient failures.
+ *
+ * The build makes 1,025 requests to a free public API. A dropped connection
+ * (ECONNRESET), a timeout, a 429 rate limit or a 5xx will happen eventually,
+ * and without retries one blip fails the whole deploy. We retry with
+ * exponential backoff (0.5s, 1s, 2s) plus random jitter, so parallel
+ * requests that failed together don't all retry at the same instant.
+ */
 async function fetchPokemon(id: number): Promise<Pokemon> {
-  const res = await fetch(`${API_BASE}/pokemon/${id}`, { next: { revalidate: ONE_DAY } });
-  if (!res.ok) throw new Error(`PokeAPI returned ${res.status} for Pokémon #${id}`);
-  return toPokemon(await res.json());
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const res = await fetch(`${API_BASE}/pokemon/${id}`, {
+        next: { revalidate: ONE_DAY },
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+      if (!res.ok) {
+        const message = `PokeAPI returned ${res.status} for Pokémon #${id}`;
+        const retryable = res.status === 429 || res.status >= 500;
+        throw retryable ? new Error(message) : new PermanentError(message);
+      }
+      // Inside the try: the connection can also drop while the body streams in.
+      return toPokemon(await res.json());
+    } catch (error) {
+      if (error instanceof PermanentError || attempt >= MAX_ATTEMPTS) throw error;
+      const delay = 500 * 2 ** (attempt - 1) + Math.random() * 250;
+      console.warn(`PokeAPI #${id} failed (attempt ${attempt}/${MAX_ATTEMPTS}), retrying in ${Math.round(delay)}ms`);
+      await sleep(delay);
+    }
+  }
 }
 
 // Keep the slimmed result in memory so dev reloads don't refetch every record.
