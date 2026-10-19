@@ -1,0 +1,61 @@
+@use '../abstracts/mixins' as *;
+
+// Block: pokemon-profile - header for the stat comparison card.
+.pokemon-profile {
+  display: flex;
+  align-items: center;
+  gap: space(3);
+
+  &__sprite {
+    flex-shrink: 0;
+    border-radius: 8px;
+    background: var(--hover-wash);
+  }
+
+  &__info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__number {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__name {
+    font-size: 1.125rem;
+    font-weight: 700;
+  }
+
+  &__types {
+    display: flex;
+    gap: space(1);
+    margin: space(1) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__type {
+    padding: 0 space(2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+
+  &__total {
+    text-align: right;
+  }
+
+  &__total-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+
+  &__total-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+}

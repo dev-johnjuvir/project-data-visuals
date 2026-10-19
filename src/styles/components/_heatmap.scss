@@ -1,0 +1,106 @@
+@use 'sass:list';
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// Block: heatmap - generates one modifier per color step with a Sass loop.
+.heatmap {
+  display: flex;
+  flex-direction: column;
+  gap: space(3);
+
+  &__row {
+    transition: opacity 150ms ease;
+
+    &--dimmed {
+      opacity: 0.35;
+    }
+
+    &--active .heatmap__row-label {
+      fill: var(--text-primary);
+      font-weight: 700;
+    }
+  }
+
+  &__cell--hovered {
+    stroke: var(--text-primary);
+    stroke-width: 2;
+  }
+
+  &__value {
+    font-size: 11px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+
+  $steps: list.length($sequential);
+
+  @for $i from 0 to $steps {
+    $light-color: list.nth($sequential, $i + 1);
+    // Dark mode reads the ramp backwards: low values are dark, near the surface.
+    $dark-color: list.nth($sequential, $steps - $i);
+
+    &__cell--step-#{$i} {
+      fill: $light-color;
+      background-color: $light-color;
+
+      @include dark {
+        fill: $dark-color;
+        background-color: $dark-color;
+      }
+    }
+
+    // Pick ink that stays readable on each step.
+    &__value--step-#{$i} {
+      @if $i < 3 {
+        fill: #0b0b0b;
+      } @else {
+        fill: #ffffff;
+      }
+
+      @include dark {
+        @if $i < 4 {
+          fill: #f0efec;
+        } @else {
+          fill: #0b0b0b;
+        }
+      }
+    }
+  }
+
+  &__legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: space(2);
+
+    @include from($breakpoint-md) {
+      padding-left: 76px; // align with the cells, past the row labels
+    }
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+
+  &__legend-steps {
+    display: flex;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__legend-step {
+    width: 28px;
+    height: 10px;
+    border-radius: 2px;
+  }
+
+  &__legend-label {
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__legend-caption {
+    margin-left: space(2);
+    color: var(--text-muted);
+  }
+}

@@ -1,0 +1,57 @@
+@use 'sass:map';
+@use 'tokens' as *;
+
+
+// One "--type-<name>" modifier per Pokémon type, generated from the token
+// map. Include it inside an element: `&__bar { @include type-fills; }`
+// gives .chart__bar--type-fire, .chart__bar--type-water, ...
+@mixin type-fills {
+  @each $type in map.keys($types-light) {
+    &--type-#{$type} {
+      fill: var(--type-#{$type});
+    }
+  }
+}
+
+@function space($step) {
+  @return map.get($space, $step);
+}
+
+@mixin from($breakpoint) {
+  @media (min-width: $breakpoint) {
+    @content;
+  }
+}
+
+// Apply styles only in dark mode, covering both the OS setting and the toggle.
+@mixin dark {
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) & {
+      @content;
+    }
+  }
+  :root[data-theme='dark'] & {
+    @content;
+  }
+}
+
+@mixin card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: $radius;
+}
+
+@mixin eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+@mixin focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--series-1);
+    outline-offset: 2px;
+  }
+}

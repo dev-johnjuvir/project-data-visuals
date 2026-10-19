@@ -1,0 +1,43 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// Block: dashboard - arranges the filter bar, tiles and chart cards.
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: space(4);
+
+  // While another generation loads, keep the current charts on screen but
+  // dimmed - no blank flash, no layout jump. Pure CSS: :has() reacts to the
+  // spinner that the picker renders inside the pending link.
+  &__tiles,
+  &__grid {
+    transition: opacity 200ms ease;
+  }
+
+  &:has(.generation-picker__pending) &__tiles,
+  &:has(.generation-picker__pending) &__grid {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  &__tiles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: space(3);
+
+    @include from($breakpoint-md) {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: space(4);
+
+    @include from($breakpoint-md) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+}

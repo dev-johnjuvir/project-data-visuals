@@ -1,0 +1,53 @@
+@use '../abstracts/mixins' as *;
+
+// Block: tooltip - floats above the chart, never captures the pointer.
+.tooltip {
+  position: absolute;
+  z-index: 10;
+  min-width: 150px;
+  padding: space(2) space(3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  font-size: 0.8125rem;
+  pointer-events: none;
+  transform: translate(12px, -50%);
+
+  &--flip {
+    transform: translate(calc(-100% - 12px), -50%);
+  }
+
+  &__title {
+    margin-bottom: space(1);
+    font-weight: 600;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: space(2);
+  }
+
+  &__swatch {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+  }
+
+  &__label {
+    flex: 1;
+    color: var(--text-secondary);
+  }
+
+  &__value {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__hint {
+    margin-top: space(1);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+}

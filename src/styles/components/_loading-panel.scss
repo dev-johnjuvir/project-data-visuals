@@ -1,0 +1,25 @@
+@use '../abstracts/mixins' as *;
+
+// Block: loading-panel - stands in for the dashboard while data is fetched.
+.loading-panel {
+  @include card;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: space(2);
+  min-height: 420px;
+  padding: space(6) space(4);
+  text-align: center;
+
+  &__title {
+    margin-top: space(2);
+    font-weight: 600;
+  }
+
+  &__detail {
+    max-width: 360px;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+  }
+}

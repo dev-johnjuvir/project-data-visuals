@@ -1,0 +1,49 @@
+@use '../abstracts/mixins' as *;
+
+// Block: data-table - the accessible twin of each chart.
+.data-table {
+  width: 100%;
+  overflow-x: auto;
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+  }
+
+  &__caption {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  &__head {
+    position: sticky;
+    top: 0;
+    padding: space(2);
+    background: var(--surface-1);
+    border-bottom: 1px solid var(--baseline);
+    text-align: left;
+    @include eyebrow;
+
+    &--numeric {
+      text-align: right;
+    }
+  }
+
+  &__row:hover {
+    background: var(--hover-wash);
+  }
+
+  &__cell {
+    padding: 6px space(2);
+    border-bottom: 1px solid var(--grid);
+
+    &--numeric {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+}

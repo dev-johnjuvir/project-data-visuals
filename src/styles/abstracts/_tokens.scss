@@ -1,0 +1,124 @@
+// Design tokens: Sass maps compiled into CSS custom properties.
+// Sass gives us the maps and loops at build time; CSS variables let the
+// browser swap the whole theme at runtime (light/dark) without recompiling.
+
+$light: (
+  'page': #f9f9f7,
+  'surface-1': #fcfcfb,
+  'text-primary': #0b0b0b,
+  'text-secondary': #52514e,
+  'text-muted': #898781,
+  'grid': #e1e0d9,
+  'baseline': #c3c2b7,
+  'border': rgba(11, 11, 11, 0.1),
+  'hover-wash': rgba(11, 11, 11, 0.04),
+  'series-1': #2a78d6,
+  'series-2': #eb6834,
+  'mark-muted': #d4d3cc,
+);
+
+$dark: (
+  'page': #0d0d0d,
+  'surface-1': #1a1a19,
+  'text-primary': #f0efec,
+  'text-secondary': #c3c2b7,
+  'text-muted': #898781,
+  'grid': #2c2c2a,
+  'baseline': #383835,
+  'border': rgba(255, 255, 255, 0.1),
+  'hover-wash': rgba(255, 255, 255, 0.05),
+  'series-1': #3987e5,
+  'series-2': #d95926,
+  'mark-muted': #43433f,
+);
+
+// Pokémon type colors: the games' familiar hues, with lightness stepped per
+// theme so every bar clears 3:1 contrast against the chart surface.
+// 18 hues is far past the 8 a chart can keep apart by color alone, which is
+// fine here only because every mark is also labelled with its type name.
+$types-light: (
+  'normal': #969468,
+  'fire': #e0741e,
+  'water': #6390f0,
+  'electric': #ad9007,
+  'grass': #58a422,
+  'ice': #5b9c9a,
+  'fighting': #c22e28,
+  'poison': #a33ea1,
+  'ground': #b08e30,
+  'flying': #9d83e5,
+  'psychic': #f95587,
+  'bug': #8a9a09,
+  'rock': #a69121,
+  'ghost': #735797,
+  'dragon': #6f35fc,
+  'dark': #705746,
+  'steel': #9090a6,
+  'fairy': #c979a1,
+);
+
+$types-dark: (
+  'normal': #a8a77a,
+  'fire': #ee8130,
+  'water': #6390f0,
+  'electric': #f7d02c,
+  'grass': #7ac74c,
+  'ice': #96d9d6,
+  'fighting': #c22e28,
+  'poison': #a33ea1,
+  'ground': #e2bf65,
+  'flying': #a98ff3,
+  'psychic': #f95587,
+  'bug': #a6b91a,
+  'rock': #b6a136,
+  'ghost': #765a9a,
+  'dragon': #7037fe,
+  'dark': #7a6150,
+  'steel': #b7b7ce,
+  'fairy': #d685ad,
+);
+
+// Sequential blue ramp, light -> dark (heatmap). On a dark surface the ramp
+// runs the other way, so "low" always recedes into the background.
+$sequential: (#cde2fb, #9ec5f4, #6da7ec, #3987e5, #256abf, #184f95, #0d366b);
+
+$font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+$space: (
+  1: 4px,
+  2: 8px,
+  3: 12px,
+  4: 16px,
+  5: 24px,
+  6: 32px,
+  7: 48px,
+);
+
+$radius: 12px;
+$breakpoint-md: 900px;
+
+@mixin emit($map, $prefix: '') {
+  @each $name, $value in $map {
+    --#{$prefix}#{$name}: #{$value};
+  }
+}
+
+:root {
+  color-scheme: light;
+  @include emit($light);
+  @include emit($types-light, 'type-');
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    @include emit($dark);
+    @include emit($types-dark, 'type-');
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  @include emit($dark);
+  @include emit($types-dark, 'type-');
+}

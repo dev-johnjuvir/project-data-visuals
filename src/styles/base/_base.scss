@@ -1,0 +1,36 @@
+@use '../abstracts/tokens' as *;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--text-primary);
+  font-family: $font-sans;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--series-1);
+}
+
+button,
+select {
+  font: inherit;
+  color: inherit;
+}

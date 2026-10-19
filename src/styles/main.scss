@@ -1,0 +1,21 @@
+// Entry point. Order matters: tokens first, then base, then one partial per
+// BEM block. Each block file owns exactly one block and its elements/modifiers.
+
+@use 'abstracts/tokens';
+@use 'base/base';
+
+@use 'components/page';
+@use 'components/dashboard';
+@use 'components/filter-bar';
+@use 'components/generation-picker';
+@use 'components/stat-tile';
+@use 'components/chart-card';
+@use 'components/chart';
+@use 'components/heatmap';
+@use 'components/type-donut';
+@use 'components/legend';
+@use 'components/tooltip';
+@use 'components/data-table';
+@use 'components/pokemon-profile';
+@use 'components/spinner';
+@use 'components/loading-panel';
