@@ -29,6 +29,26 @@ $colors: (
   'lens-shine': #e8f7ff,
   'light-green': #5bd06e,
   'light-red': #ff8a80,
+  // Field Dex hardware
+  'casing-shade': #9e241f,
+  'casing-shine': #de5248,
+  'bezel': #23253a,
+  'bezel-raised': #34374f,
+  'bezel-label': #b9bcd0,
+  'bezel-text': #d8dae6,
+  'rec': #ff6b5e,
+  'lcd': #dcefd3,
+  'lcd-card': #f6fbf3,
+  'lcd-rule': #9db094,
+  'a-shade': #d9a92a,
+  // Traffic-light bands for a single stat on the Field Dex
+  'stat-high': #3fb560,
+  'stat-mid': #f4c430,
+  'stat-low': #e5533d,
+  'link': #1f4e8c,
+  // Keyboard focus outline. Blue on the paper pages; the Field Dex
+  // overrides it to yellow, which reads on its red and dark bezels.
+  'focus': #1f4e8c,
 );
 
 // Pokémon type colors, softened to sit on the cream "screen". Every mark
@@ -46,14 +66,14 @@ $types: (
   'fighting': #e07468,
   'poison': #be86cf,
   'ground': #e0c47a,
-  'flying': #b9c8f5,
+  'flying': #b4c2f5,
   'psychic': #f48aa9,
   'bug': #b5c94a,
   'rock': #c7ae63,
   'ghost': #9a8dcb,
   'dragon': #9a8ef2,
   'dark': #8e7c6e,
-  'steel': #b8bccb,
+  'steel': #bcc5ce,
   'fairy': #f2b1dd,
 );
 
@@ -76,6 +96,10 @@ $space: (
 $border: 3px;
 $shadow-offset: 6px;
 $breakpoint-md: 900px;
+// Field Dex: the stacked handheld layout widens at -mid (portrait tablets);
+// the four-column landscape layout needs ~1100px for its screen to breathe.
+$breakpoint-dex-mid: 600px;
+$breakpoint-dex-wide: 1100px;
 
 @mixin emit($map, $prefix: '') {
   @each $name, $value in $map {

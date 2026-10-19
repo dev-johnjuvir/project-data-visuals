@@ -2,6 +2,7 @@
 @use '../abstracts/mixins' as *;
 
 // Block: dex-list - the red sidebar with a scrolling "screen" of entries.
+// The rows themselves are the shared dex-entry block.
 .dex-list {
   @include hard-card(18px);
   flex: 1 1 280px;
@@ -50,54 +51,5 @@
     margin: 0;
     padding: 0;
     list-style: none;
-  }
-
-  &__entry {
-    @include button-reset;
-    @include pixel(16px, 400);
-    @include focus-ring;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    min-height: 40px;
-    padding: space(1) 10px;
-    border-radius: 8px;
-    color: var(--ink);
-    cursor: pointer;
-    transition: opacity 150ms ease;
-
-    &:hover {
-      background: var(--track);
-    }
-
-    &--selected,
-    &--selected:hover {
-      background: var(--yellow);
-    }
-
-    &--dimmed {
-      opacity: 0.35;
-    }
-  }
-
-  &__caret {
-    width: 12px;
-    font-size: 12px;
-  }
-
-  &__number {
-    width: 44px;
-    font-weight: 500;
-    color: var(--text-muted);
-  }
-
-  &__name {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    font-weight: 600;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 }

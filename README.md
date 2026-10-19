@@ -43,6 +43,38 @@ Interaction rules applied throughout:
 - **Every chart has a table view** (except the scatter, whose dots are labelled buttons),
   so exact values never depend on hovering.
 
+## The Field Dex (`/dex`)
+
+`/dex` redirects to `/dex/1`; each region's handheld Pokédex lives at `/dex/1` … `/dex/9`
+(the charts page links to it with **Open the Field Dex**). It reuses the same server data,
+plus height, weight, an animated sprite and the cry:
+
+- **Screen:** the scanned entry with STATS (radar + traffic-light bars), INFO and RANK tabs.
+  The LCD is a fixed height; only the tab content scrolls, with a hidden scrollbar and a fade
+  at the bottom edge.
+- **Controls:** D-pad (↑↓ browse, ←→ tabs, and the arrow keys do the same), A = next tab,
+  B = random, plus first/last jumps.
+- **List:** search by name or number (`#4`, `char`), filter by type in either slot.
+- **Layouts:** stacked on phones and portrait tablets, four columns from 1100px.
+- **Light by design:** sprites download one at a time for the entry on screen; cries
+  (~7 KB `.ogg` files) download only when you press **Cry**.
+
+## Metadata, previews and icons
+
+All generated from files in `src/app/`, the Next.js metadata conventions:
+
+| File | Produces |
+|---|---|
+| `layout.tsx` `metadata` | Title template, description, Open Graph / Twitter defaults, theme color |
+| `src/lib/metadata.ts` | Per-page title, description, canonical URL (pages REPLACE the layout's `openGraph`/`twitter` objects, so this builds them whole) |
+| `generation/[gen]/opengraph-image.tsx` | 1200×630 link preview per region: top five types + strongest Pokémon, from real data |
+| `dex/[gen]/opengraph-image.tsx` | Field Dex preview per region, with its three starters on the screen |
+| `icon.svg` / `apple-icon.tsx` | Favicon, and a 180px PNG for iOS home screens |
+| `manifest.ts` | Web app manifest (name, colors, icons) |
+
+Preview links need absolute URLs. On Vercel the production domain is picked up
+automatically; for a custom domain set `NEXT_PUBLIC_SITE_URL=https://your-domain`.
+
 ## SSR and loading states
 
 - **Charts are HTML + CSS, not SVG.** Positions and sizes are percentages computed from the

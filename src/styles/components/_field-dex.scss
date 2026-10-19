@@ -1,0 +1,360 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// Block: field-dex - the red handheld casing and its hardware.
+//
+// One grid, two arrangements, swapped with grid-template-areas:
+//
+//   stacked (phones + portrait tablets)    landscape ($breakpoint-dex-wide+)
+//   ┌──────────────┐                       ┌────────────────────────────┐
+//   │ top     top  │                       │ top   top    top    top    │
+//   │ screen screen│                       │ pad   screen list   buttons│
+//   │ pad   buttons│                       └────────────────────────────┘
+//   │ list   list  │
+//   └──────────────┘
+//
+// The stacked layout just gets wider on portrait tablets ($breakpoint-dex-mid).
+// Landscape needs ~1100px: below that its screen column gets crushed.
+$tablet: $breakpoint-dex-wide;
+
+.field-dex {
+  // Yellow focus rings: blue would vanish against the red and dark bezels.
+  --focus: var(--yellow);
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas:
+    'top top'
+    'screen screen'
+    'pad buttons'
+    'list list';
+  gap: space(4);
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 18px;
+  border: 4px solid var(--ink);
+  border-radius: 36px;
+  background: var(--dex-red);
+  // Hard drop shadow + a darker lip below and a highlight along the top edge,
+  // so the casing reads as molded plastic.
+  box-shadow:
+    8px 8px 0 var(--ink),
+    inset 0 -8px 0 var(--casing-shade),
+    inset 0 6px 0 var(--casing-shine);
+
+  @include from($breakpoint-dex-mid) {
+    max-width: 680px;
+    padding: space(6);
+    border-radius: 44px;
+  }
+
+  @include from($tablet) {
+    grid-template-columns: minmax(96px, 150px) minmax(0, 1.4fr) minmax(0, 1fr) minmax(96px, 150px);
+    grid-template-areas:
+      'top top top top'
+      'pad screen list buttons';
+    max-width: 1240px;
+    padding: 26px space(6) 30px;
+    border-radius: 52px;
+  }
+
+  // --- Top bar ----------------------------------------------------------
+
+  &__top {
+    grid-area: top;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: space(3);
+    padding: 2px 6px;
+    color: var(--paper);
+  }
+
+  &__brand,
+  &__status {
+    display: flex;
+    align-items: center;
+    gap: space(3);
+  }
+
+  // Speaker grille.
+  &__grip {
+    display: flex;
+    gap: space(1);
+
+    span {
+      width: 5px;
+      height: 26px;
+      border-radius: 3px;
+      background: var(--ink);
+    }
+  }
+
+  &__model {
+    display: flex;
+    flex-direction: column;
+    gap: space(1);
+  }
+
+  &__model-name {
+    @include label(11px);
+    line-height: 1.4;
+  }
+
+  &__model-region {
+    @include pixel(14px, 500);
+  }
+
+  &__leds {
+    display: flex;
+    gap: 6px;
+  }
+
+  &__led {
+    width: 12px;
+    height: 12px;
+    border: 3px solid var(--ink);
+    border-radius: 999px;
+
+    &--green {
+      background: var(--light-green);
+    }
+
+    &--yellow {
+      background: var(--yellow);
+    }
+
+    &--white {
+      background: var(--paper);
+    }
+  }
+
+  &__charts-link {
+    @include pixel(15px);
+    @include focus-ring;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: space(2) 14px;
+    border: $border solid var(--ink);
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--paper);
+    text-decoration: none;
+
+    &:hover {
+      color: #ffe9a8;
+    }
+  }
+
+  // --- Areas ------------------------------------------------------------
+
+  &__screen {
+    grid-area: screen;
+    min-width: 0;
+  }
+
+  &__list {
+    grid-area: list;
+    min-width: 0;
+  }
+
+  &__pad-area {
+    grid-area: pad;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: space(2);
+
+    @include from($tablet) {
+      align-self: center;
+    }
+  }
+
+  &__buttons-area {
+    grid-area: buttons;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+
+    @include from($tablet) {
+      align-self: center;
+    }
+  }
+
+  // --- D-pad --------------------------------------------------------------
+
+  // A 3x3 grid: the four keys sit in the edge cells and share borders with
+  // the raised center, so together they read as one cross-shaped part.
+  &__pad {
+    display: grid;
+    grid-template-columns: repeat(3, 48px);
+    grid-template-rows: repeat(3, 48px);
+    grid-template-areas:
+      '. up .'
+      'left center right'
+      '. down .';
+  }
+
+  &__pad-key {
+    @include button-reset;
+    @include focus-ring;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: $border solid var(--ink);
+    background: var(--bezel);
+    color: var(--paper);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--bezel-raised);
+    }
+
+    &:active {
+      color: var(--yellow);
+    }
+
+    path {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.5;
+      stroke-linecap: square;
+    }
+
+    &--up {
+      grid-area: up;
+      border-bottom: 0;
+      border-radius: 10px 10px 0 0;
+    }
+
+    &--down {
+      grid-area: down;
+      border-top: 0;
+      border-radius: 0 0 10px 10px;
+    }
+
+    &--left {
+      grid-area: left;
+      border-right: 0;
+      border-radius: 10px 0 0 10px;
+    }
+
+    &--right {
+      grid-area: right;
+      border-left: 0;
+      border-radius: 0 10px 10px 0;
+    }
+  }
+
+  &__pad-center {
+    grid-area: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bezel);
+
+    span {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      background: var(--bezel-raised);
+    }
+  }
+
+  // Start / select style slots under the pad - decoration.
+  &__slots {
+    display: flex;
+    gap: 6px;
+    padding-top: 6px;
+
+    span {
+      width: 36px;
+      height: 8px;
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      background: var(--casing-shade);
+    }
+  }
+
+  // --- A / B and jump buttons -------------------------------------------
+
+  &__buttons {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    @include from($tablet) {
+      flex-direction: column;
+    }
+  }
+
+  &__button-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__round {
+    @include button-reset;
+    @include focus-ring;
+    width: 64px;
+    height: 64px;
+    border: $border solid var(--ink);
+    border-radius: 999px;
+    color: var(--ink);
+    font-family: $font-label;
+    font-size: 12px;
+    text-align: center;
+    cursor: pointer;
+
+    // The inset shadow is the button's shaded underside; pressing removes it.
+    &:active {
+      box-shadow: none;
+      transform: translateY(2px);
+    }
+
+    &--a {
+      background: var(--yellow);
+      box-shadow: inset -4px -5px 0 var(--a-shade);
+    }
+
+    &--b {
+      background: var(--lens);
+      box-shadow: inset -4px -5px 0 var(--lens-shade);
+    }
+  }
+
+  &__button-label {
+    @include label(8px);
+    color: var(--paper);
+  }
+
+  &__jumps {
+    display: flex;
+    gap: space(2);
+  }
+
+  &__jump {
+    @include button-reset;
+    @include pixel(14px);
+    @include focus-ring;
+    min-height: 44px;
+    padding: 0 space(3);
+    border: $border solid var(--ink);
+    border-radius: 999px;
+    background: var(--bezel);
+    color: var(--paper);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--bezel-raised);
+    }
+  }
+}

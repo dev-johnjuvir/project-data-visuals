@@ -1,4 +1,5 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
+import { COLORS, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/brand';
 import { M_PLUS_Rounded_1c, Pixelify_Sans, Press_Start_2P } from 'next/font/google';
 import '@/styles/main.scss';
 
@@ -14,9 +15,24 @@ const body = M_PLUS_Rounded_1c({
   display: 'swap',
 });
 
+// Site-wide defaults. Each page adds its own title and description; the
+// template turns a page title like "Region IV · Sinnoh" into
+// "Region IV · Sinnoh | Dex Data Visuals". Icons, the manifest and preview
+// images are picked up from the files in app/ (icon.svg, apple-icon.tsx,
+// manifest.ts, opengraph-image.tsx) - no need to list them here.
 export const metadata: Metadata = {
-  title: 'Dex Data Visuals',
-  description: 'Five readouts on every generation of Pokémon, from the PokeAPI',
+  metadataBase: SITE_URL, // makes preview-image URLs absolute, as crawlers require
+  title: { default: SITE_NAME, template: `%s | ${SITE_NAME}` },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: ['Pokémon', 'Pokédex', 'data visualization', 'PokeAPI', 'charts', 'base stats'],
+  openGraph: { type: 'website', siteName: SITE_NAME, locale: 'en_US' },
+  twitter: { card: 'summary_large_image' },
+};
+
+// Tints the browser's toolbar on mobile to match the red casing.
+export const viewport: Viewport = {
+  themeColor: COLORS.dexRed,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

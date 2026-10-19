@@ -34,6 +34,10 @@
     padding-top: space(2);
     font-size: 14px;
     color: var(--text-soft);
+
+    a {
+      color: var(--link);
+    }
   }
 
   &__error {

@@ -16,6 +16,9 @@ interface ApiPokemon {
   name: string;
   types: { slot: number; type: { name: string } }[];
   stats: { base_stat: number; stat: { name: string } }[];
+  height: number;
+  weight: number;
+  cries?: { latest: string | null; legacy: string | null };
   sprites: {
     front_default: string | null;
     other?: { showdown?: { front_default: string | null } };
@@ -51,6 +54,11 @@ function toPokemon(raw: ApiPokemon): Pokemon {
     stats,
     total: STAT_KEYS.reduce((sum, key) => sum + stats[key], 0),
     sprite: pickSprite(raw.sprites),
+    // Every Pokémon has a modern "latest" cry; the original 8-bit "legacy"
+    // ones exist only for older generations.
+    cry: raw.cries?.latest ?? raw.cries?.legacy ?? null,
+    height: raw.height,
+    weight: raw.weight,
   };
 }
 

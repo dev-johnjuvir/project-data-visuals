@@ -1,0 +1,23 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// Block: dex-page - the page around the Field Dex device.
+.dex-page {
+  display: flex;
+  flex-direction: column;
+  gap: space(5);
+  min-height: 100vh;
+  padding: space(7) space(4) 40px;
+
+  &__note {
+    max-width: 720px;
+    margin: 0 auto;
+    font-size: 14px;
+    color: var(--text-soft);
+    text-align: center;
+
+    a {
+      color: var(--link);
+    }
+  }
+}

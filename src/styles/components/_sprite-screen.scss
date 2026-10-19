@@ -16,6 +16,13 @@
     width: 88px;
     height: 88px;
   }
+
+  // Smaller window for the Field Dex's screen header.
+  &--compact {
+    width: 84px;
+    height: 84px;
+    background-color: var(--lcd-card);
+  }
   overflow: hidden;
   // Faint scanlines, like an old handheld display.
   background-image: repeating-linear-gradient(

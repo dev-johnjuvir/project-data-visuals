@@ -6,6 +6,7 @@ import { Spinner } from './Spinner';
 interface SpriteScreenProps {
   src: string | null;
   name: string;
+  size?: 'regular' | 'compact';
 }
 
 type Status = 'loading' | 'loaded' | 'error';
@@ -20,7 +21,7 @@ type Status = 'loading' | 'loaded' | 'error';
  * Give this component a `key` of the image URL, so switching Pokémon remounts
  * it and the status starts over at "loading".
  */
-export function SpriteScreen({ src, name }: SpriteScreenProps) {
+export function SpriteScreen({ src, name, size = 'regular' }: SpriteScreenProps) {
   const imgRef = useRef<HTMLImageElement>(null);
   const [status, setStatus] = useState<Status>(src ? 'loading' : 'error');
 
@@ -34,7 +35,7 @@ export function SpriteScreen({ src, name }: SpriteScreenProps) {
   }, []);
 
   return (
-    <div className={`sprite-screen sprite-screen--${status}`}>
+    <div className={`sprite-screen sprite-screen--${status}${size === 'compact' ? ' sprite-screen--compact' : ''}`}>
       {src && status !== 'error' && (
         // eslint-disable-next-line @next/next/no-img-element -- animated GIF, see above
         <img

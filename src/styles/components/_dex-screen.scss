@@ -1,0 +1,357 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// Block: dex-screen - the dark bezel and green LCD showing the scanned entry.
+.dex-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px 14px space(3);
+  border: 4px solid var(--ink);
+  border-radius: 22px;
+  background: var(--bezel);
+
+  &__status {
+    display: flex;
+    align-items: center;
+    gap: space(2);
+    padding: 0 space(1);
+  }
+
+  &__status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--rec);
+  }
+
+  &__status-label {
+    @include label(8px);
+    color: var(--bezel-label);
+  }
+
+  // The LCD: pale green with faint horizontal scanlines. A FIXED height, like
+  // real hardware - the header and tabs stay put and only __body scrolls,
+  // so browsing never makes the device grow or shrink.
+  &__lcd {
+    display: flex;
+    flex-direction: column;
+    gap: space(3);
+    height: 540px;
+    padding: 14px space(4);
+    border: $border solid var(--ink);
+    border-radius: 12px;
+    background-color: var(--lcd);
+    background-image: repeating-linear-gradient(0deg, rgba(27, 27, 47, 0.045) 0 2px, transparent 2px 4px);
+
+    @include from($breakpoint-dex-wide) {
+      height: 580px;
+    }
+  }
+
+  &__head {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  &__identity {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  // Takes whatever height is left; the content scrolls inside it.
+  &__body {
+    @include hide-scrollbar;
+    flex: 1;
+    min-height: 0; // lets a flex child shrink below its content and scroll
+    overflow-y: auto;
+    overscroll-behavior: contain; // reaching the end doesn't scroll the page
+    margin: 0 (-(space(1)));
+    padding: 2px space(1) space(5);
+    border-radius: 6px;
+    // With no scrollbar, fade the bottom edge so cut-off content reads as
+    // "there's more below" rather than ending abruptly.
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+
+    &:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 0;
+    }
+  }
+
+  &__number {
+    font-family: $font-label;
+    font-size: 11px;
+    color: var(--text-soft);
+  }
+
+  &__name {
+    @include pixel(32px, 700);
+    overflow: hidden;
+    line-height: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__types {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__type {
+    @include pixel(15px);
+    padding: 3px space(3);
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: var(--type-color);
+  }
+
+  // --- Tabs ---------------------------------------------------------------
+
+  &__tabs {
+    flex-shrink: 0;
+    display: flex;
+    gap: 6px;
+  }
+
+  &__tab {
+    @include button-reset;
+    @include label(10px);
+    @include focus-ring;
+    flex: 1;
+    min-height: 44px;
+    border: $border solid var(--ink);
+    border-radius: 10px;
+    background: var(--lcd-card);
+    color: var(--ink);
+    text-align: center;
+    cursor: pointer;
+
+    &--active {
+      background: var(--ink);
+      color: var(--lcd);
+    }
+  }
+
+  // --- STATS tab ----------------------------------------------------------
+
+  &__stats {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: space(4);
+  }
+
+  &__radar {
+    flex: 1 1 200px;
+    display: flex;
+    justify-content: center;
+  }
+
+  &__bars {
+    flex: 1 1 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    min-width: 0;
+  }
+
+  &__bar {
+    display: grid;
+    grid-template-columns: 62px minmax(0, 1fr) 34px;
+    align-items: center;
+    gap: space(2);
+  }
+
+  &__bar-label {
+    @include pixel(15px);
+  }
+
+  &__bar-track {
+    display: block;
+    height: 14px;
+    overflow: hidden;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: var(--lcd-card);
+  }
+
+  &__bar-fill {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    transition: width 250ms ease;
+
+    &--high {
+      background: var(--stat-high);
+    }
+
+    &--mid {
+      background: var(--stat-mid);
+    }
+
+    &--low {
+      background: var(--stat-low);
+    }
+  }
+
+  &__bar-value {
+    @include pixel(17px, 700);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__total {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-top: space(2);
+    border-top: 2px dashed var(--lcd-rule);
+    font-family: $font-pixel;
+  }
+
+  &__total-label {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  &__total-value {
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  // --- INFO and RANK cards -----------------------------------------------
+
+  &__facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin: 0;
+  }
+
+  &__card {
+    display: flex;
+    flex: 1 1 140px;
+    flex-direction: column;
+    gap: space(1);
+    padding: 10px space(3);
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    background: var(--lcd-card);
+  }
+
+  &__card-label {
+    @include label(9px);
+    line-height: 1.5;
+    color: var(--text-soft);
+  }
+
+  &__card-value {
+    @include pixel(22px, 700);
+    margin: 0;
+
+    &--big {
+      font-size: 30px;
+
+      small {
+        font-size: 16px;
+        font-weight: 500;
+      }
+    }
+  }
+
+  &__rank {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  &__rank-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  &__beats {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  &__beats-track {
+    display: block;
+    height: 16px;
+    overflow: hidden;
+    border: 2px solid var(--ink);
+    border-radius: 4px;
+    background: var(--lcd-card);
+  }
+
+  &__beats-fill {
+    display: block;
+    height: 100%;
+    background: var(--ink);
+  }
+
+  &__nearest {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__near {
+    @include button-reset;
+    @include pixel(16px, 400);
+    @include focus-ring;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    padding: space(1) 10px;
+    border: 2px solid var(--ink);
+    border-radius: 8px;
+    background: var(--lcd-card);
+    color: var(--ink);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--paper);
+    }
+  }
+
+  &__near-number {
+    width: 44px;
+    color: var(--text-soft);
+  }
+
+  &__near-name {
+    flex: 1;
+    font-weight: 600;
+  }
+
+  &__near-total {
+    font-weight: 700;
+  }
+
+  // --- Footer -------------------------------------------------------------
+
+  &__footer {
+    flex-shrink: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: space(2);
+    font-family: $font-pixel;
+    font-size: 14px;
+    color: var(--text-soft);
+  }
+}

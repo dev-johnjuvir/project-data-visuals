@@ -1,0 +1,100 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// Block: dex-search - the device's searchable entry list.
+.dex-search {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+  min-width: 0;
+  padding: space(3);
+  border: 4px solid var(--ink);
+  border-radius: 22px;
+  background: var(--bezel);
+
+  &__controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: space(2);
+  }
+
+  &__field {
+    @include label(8px);
+    display: flex;
+    flex-direction: column;
+    gap: space(1);
+    line-height: 1.5;
+    color: var(--paper);
+
+    &--search {
+      flex: 1 1 140px;
+    }
+
+    &--type {
+      flex: 1 1 110px;
+    }
+  }
+
+  &__input {
+    @include pixel(16px, 500);
+    width: 100%;
+    min-height: 44px;
+    padding: 0 space(3);
+    border: $border solid var(--ink);
+    border-radius: 10px;
+    background: var(--lcd);
+    color: var(--ink);
+    text-transform: none;
+
+    &:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    &::placeholder {
+      color: var(--text-muted);
+    }
+  }
+
+  &__meta {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 2px;
+    font-family: $font-pixel;
+    font-size: 14px;
+    color: var(--bezel-text);
+  }
+
+  &__box {
+    position: relative; // so useScrollToSelected can measure rows
+    height: 300px;
+    overflow-y: auto;
+    padding: 6px;
+    border: $border solid var(--ink);
+    border-radius: 12px;
+    background: var(--lcd);
+
+    @include from($breakpoint-dex-mid) {
+      height: 380px;
+    }
+
+    @include from($breakpoint-dex-wide) {
+      height: 520px;
+    }
+  }
+
+  &__empty {
+    @include pixel(16px, 400);
+    margin: space(3) space(2);
+  }
+
+  &__entries {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}

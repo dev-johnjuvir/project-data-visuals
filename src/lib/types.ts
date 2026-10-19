@@ -41,4 +41,10 @@ export interface Pokemon {
   total: number;
   /** Animated GIF when one exists, otherwise a still sprite. */
   sprite: string | null;
+  /** The cry, as a small .ogg file. Downloaded only when someone presses play. */
+  cry: string | null;
+  /** In decimetres, as the API sends it (7 = 0.7 m). */
+  height: number;
+  /** In hectograms, as the API sends it (69 = 6.9 kg). */
+  weight: number;
 }

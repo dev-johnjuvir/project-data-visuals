@@ -1,0 +1,40 @@
+@use '../abstracts/tokens' as *;
+
+// Block: stat-radar - the six-axis stat shape on the Field Dex screen.
+// Its fill arrives as --type-color, set inline from the data.
+.stat-radar {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+
+  &__ring {
+    fill: none;
+    stroke: var(--lcd-rule);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 4;
+
+    &--outer {
+      fill: #eef7e9;
+      stroke: var(--ink);
+      stroke-width: 2.5;
+      stroke-dasharray: none;
+    }
+  }
+
+  &__shape {
+    fill: var(--type-color);
+    fill-opacity: 0.85;
+    stroke: var(--ink);
+    stroke-width: 3;
+    stroke-linejoin: round;
+    transition: all 250ms ease;
+  }
+
+  &__label {
+    fill: var(--ink);
+    font-family: $font-pixel;
+    font-size: 14px;
+    font-weight: 700;
+  }
+}

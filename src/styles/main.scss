@@ -15,6 +15,7 @@
 @use 'components/type-dot';
 @use 'components/stat-tile';
 @use 'components/dex-list';
+@use 'components/dex-entry';
 
 // Readouts
 @use 'components/dashboard';
@@ -28,6 +29,14 @@
 @use 'components/histogram';
 @use 'components/heatmap';
 @use 'components/data-table';
+
+// Field Dex page
+@use 'components/dex-page';
+@use 'components/field-dex';
+@use 'components/dex-screen';
+@use 'components/stat-radar';
+@use 'components/cry-button';
+@use 'components/dex-search';
 
 // States
 @use 'components/spinner';

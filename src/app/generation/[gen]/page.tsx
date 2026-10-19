@@ -1,9 +1,12 @@
-import { Suspense } from 'react';
+import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Dashboard } from '@/components/Dashboard';
+import { DevSuspense } from '@/components/DevSuspense';
 import { LoadingPanel } from '@/components/LoadingPanel';
 import { RegionPicker } from '@/components/RegionPicker';
 import { GENERATIONS, generationSize, getGeneration, type Generation } from '@/lib/generations';
+import { pageMetadata } from '@/lib/metadata';
 import { getPokemon } from '@/lib/pokeapi';
 
 // Server Component: data is fetched on the server, and only the slimmed
@@ -16,25 +19,19 @@ export function generateStaticParams() {
   return GENERATIONS.map((g) => ({ gen: String(g.id) }));
 }
 
-/**
- * Stream the dashboard behind a spinner only in development.
- *
- * `next dev` fetches the PokeAPI on request, so a cold generation takes a few
- * seconds and a spinner helps. In production every page is pre-built, so no
- * visitor ever waits on the server - and a <Suspense> boundary would make the
- * static HTML ship the spinner first, with the real charts hidden until an
- * inline script swaps them in. Without JavaScript (or for a crawler) the
- * page would be a spinner forever. Skipping it keeps the HTML complete.
- */
-const STREAM_DASHBOARD = process.env.NODE_ENV === 'development';
-
 interface PageProps {
   params: Promise<{ gen: string }>;
 }
 
-export async function generateMetadata({ params }: PageProps) {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const generation = getGeneration(Number((await params).gen));
-  return { title: generation ? `Region ${generation.numeral} · Dex Data Visuals` : 'Dex Data Visuals' };
+  if (!generation) return {};
+  // The preview image itself comes from ./opengraph-image.tsx.
+  return pageMetadata({
+    title: `Region ${generation.numeral} · ${generation.region}`,
+    description: `Five readouts on the ${generationSize(generation)} Pokémon of ${generation.region} (Generation ${generation.numeral}): type shares, attack vs defense, base stat totals, average stats by type, and a stat scanner.`,
+    path: `/generation/${generation.id}`,
+  });
 }
 
 export default async function GenerationPage({ params }: PageProps) {
@@ -58,6 +55,9 @@ export default async function GenerationPage({ params }: PageProps) {
             <p className="dex-header__breadcrumb">
               PokeAPI · Generation {generation.numeral} · {generation.region}
             </p>
+            <Link href={`/dex/${generation.id}`} className="dex-header__dex-link">
+              Open the Field Dex
+            </Link>
           </div>
           <div className="dex-header__main">
             <div className="dex-header__intro">
@@ -73,13 +73,9 @@ export default async function GenerationPage({ params }: PageProps) {
       </header>
 
       <main className="page__main">
-        {STREAM_DASHBOARD ? (
-          <Suspense fallback={<LoadingPanel count={generationSize(generation)} region={generation.region} />}>
-            <GenerationDashboard generation={generation} />
-          </Suspense>
-        ) : (
+        <DevSuspense fallback={<LoadingPanel count={generationSize(generation)} region={generation.region} />}>
           <GenerationDashboard generation={generation} />
-        )}
+        </DevSuspense>
         <footer className="page__footer">
           <span>
             Data from <a href="https://pokeapi.co">pokeapi.co</a>

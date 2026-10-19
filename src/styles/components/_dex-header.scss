@@ -70,6 +70,23 @@
     text-transform: none;
   }
 
+  // Yellow key pinned to the right of the top row.
+  &__dex-link {
+    @include pressable;
+    @include pixel(16px, 700);
+    @include focus-ring;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-left: auto;
+    padding: space(2) space(4);
+    border: $border solid var(--ink);
+    border-radius: 999px;
+    background: var(--yellow);
+    color: var(--ink);
+    text-decoration: none;
+  }
+
   &__main {
     display: flex;
     flex-wrap: wrap;
