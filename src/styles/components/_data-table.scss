@@ -1,45 +1,48 @@
+@use '../abstracts/tokens' as *;
 @use '../abstracts/mixins' as *;
 
 // Block: data-table - the accessible twin of each chart.
 .data-table {
-  width: 100%;
-  overflow-x: auto;
+  @include screen;
+  max-height: 420px;
+  overflow: auto;
+  padding: space(2) 14px;
 
   &__table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.8125rem;
+    font-size: 15px;
   }
 
   &__caption {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
+    @include visually-hidden;
   }
 
   &__head {
     position: sticky;
     top: 0;
-    padding: space(2);
-    background: var(--surface-1);
-    border-bottom: 1px solid var(--baseline);
+    padding: space(2) 6px;
+    background: var(--screen);
+    font-family: $font-pixel;
+    font-weight: 600;
     text-align: left;
-    @include eyebrow;
 
     &--numeric {
       text-align: right;
     }
   }
 
-  &__row:hover {
-    background: var(--hover-wash);
+  &__row {
+    border-top: 2px solid var(--rule);
+
+    &--total {
+      border-top: $border solid var(--ink);
+      font-weight: 700;
+    }
   }
 
   &__cell {
-    padding: 6px space(2);
-    border-bottom: 1px solid var(--grid);
+    padding: 6px;
 
     &--numeric {
       text-align: right;

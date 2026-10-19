@@ -1,0 +1,57 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// Block: panel - a numbered readout card.
+.panel {
+  @include hard-card(18px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  padding: space(5);
+  // Makes the panel a size container: children can use
+  // `@container panel (max-width: …)` to adapt to the card's own width.
+  container: panel / inline-size;
+
+  &--wide {
+    grid-column: 1 / -1;
+  }
+
+  &__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: space(3);
+  }
+
+  &__heading {
+    display: flex;
+    align-items: center;
+    gap: space(3);
+    min-width: 0;
+  }
+
+  // The red "04" badge.
+  &__number {
+    flex-shrink: 0;
+    padding: 7px space(2) 5px;
+    border: $border solid var(--ink);
+    border-radius: 8px;
+    background: var(--dex-red);
+    color: var(--paper);
+    font-family: $font-label;
+    font-size: 11px;
+  }
+
+  &__title {
+    @include pixel(26px, 700);
+    line-height: 1.15;
+  }
+
+  &__description {
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--text-soft);
+  }
+}

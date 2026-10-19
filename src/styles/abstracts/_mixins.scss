@@ -1,18 +1,6 @@
 @use 'sass:map';
 @use 'tokens' as *;
 
-
-// One "--type-<name>" modifier per Pokémon type, generated from the token
-// map. Include it inside an element: `&__bar { @include type-fills; }`
-// gives .chart__bar--type-fire, .chart__bar--type-water, ...
-@mixin type-fills {
-  @each $type in map.keys($types-light) {
-    &--type-#{$type} {
-      fill: var(--type-#{$type});
-    }
-  }
-}
-
 @function space($step) {
   @return map.get($space, $step);
 }
@@ -23,35 +11,84 @@
   }
 }
 
-// Apply styles only in dark mode, covering both the OS setting and the toggle.
-@mixin dark {
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme='light']) & {
-      @content;
-    }
-  }
-  :root[data-theme='dark'] & {
-    @content;
-  }
+// --- Type -------------------------------------------------------------
+
+@mixin pixel($size, $weight: 600) {
+  font-family: $font-pixel;
+  font-size: $size;
+  font-weight: $weight;
 }
 
-@mixin card {
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: $radius;
-}
-
-@mixin eyebrow {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+// The tiny 8-bit caps used for eyebrows like "HIGHLIGHT TYPE".
+@mixin label($size: 10px) {
+  font-family: $font-label;
+  font-size: $size;
+  line-height: 1.6;
   text-transform: uppercase;
-  color: var(--text-muted);
+}
+
+// --- Surfaces -----------------------------------------------------------
+
+// The signature look: thick ink outline + a hard, unblurred offset shadow.
+@mixin hard-card($radius: 18px) {
+  background: var(--paper);
+  border: $border solid var(--ink);
+  border-radius: $radius;
+  box-shadow: $shadow-offset $shadow-offset 0 var(--ink);
+}
+
+// The pale-green inset every chart sits in, like a handheld's LCD.
+@mixin screen {
+  background: var(--screen);
+  border: $border solid var(--ink);
+  border-radius: 12px;
+}
+
+// --- Buttons ----------------------------------------------------------
+
+// A chunky button that "presses in": selected = yellow, shadow gone, shifted
+// by the shadow's size so it looks pushed into the page.
+@mixin pressable($shadow: 3px) {
+  background: var(--paper);
+  box-shadow: $shadow $shadow 0 var(--ink);
+  cursor: pointer;
+  transition:
+    transform 80ms,
+    box-shadow 80ms;
+
+  &:hover {
+    transform: translate(1px, 1px);
+    box-shadow: ($shadow - 1px) ($shadow - 1px) 0 var(--ink);
+  }
+}
+
+@mixin pressed($shadow: 3px) {
+  background: var(--yellow);
+  box-shadow: none;
+  transform: translate($shadow, $shadow);
 }
 
 @mixin focus-ring {
   &:focus-visible {
-    outline: 2px solid var(--series-1);
-    outline-offset: 2px;
+    outline: 3px solid var(--ink);
+    outline-offset: 3px;
   }
+}
+
+@mixin button-reset {
+  margin: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+}
+
+@mixin visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

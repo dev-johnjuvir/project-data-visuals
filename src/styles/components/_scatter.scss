@@ -1,0 +1,126 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// Block: scatter - dots are absolutely positioned buttons; data positions
+// arrive inline as left/top percentages, colors as --type-color.
+.scatter {
+  @include screen;
+  padding: space(5) space(5) 40px 56px;
+
+  &__plot {
+    position: relative;
+    height: 380px;
+    border-left: $border solid var(--ink);
+    border-bottom: $border solid var(--ink);
+  }
+
+  &__gridline {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 0;
+    border-top: 2px dashed var(--grid);
+  }
+
+  &__tick {
+    position: absolute;
+    font-family: $font-pixel;
+    font-size: 13px;
+    color: var(--text-soft);
+
+    &--y {
+      right: calc(100% + 10px);
+      top: -10px;
+    }
+
+    &--x {
+      bottom: -26px;
+      width: 28px;
+      margin-left: -14px;
+      text-align: center;
+    }
+  }
+
+  &__dot {
+    @include button-reset;
+    position: absolute;
+    z-index: 1;
+    width: 12px;
+    height: 12px;
+    padding: 0;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: var(--type-color);
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      z-index: 5;
+      outline: 3px solid var(--ink);
+      outline-offset: 1px;
+    }
+
+    // Lit = matches the highlighted type: a little bigger, drawn on top.
+    &--lit {
+      z-index: 2;
+      width: 14px;
+      height: 14px;
+    }
+
+    &--dimmed {
+      border-color: var(--dim-border);
+      background: var(--dim);
+    }
+
+    // The scanned entry: big, with a yellow-and-ink target ring.
+    &--selected {
+      z-index: 3;
+      width: 20px;
+      height: 20px;
+      box-shadow:
+        0 0 0 4px var(--yellow),
+        0 0 0 7px var(--ink);
+    }
+  }
+
+  &__tag {
+    position: absolute;
+    z-index: 4;
+    padding: 3px space(2);
+    border-radius: 6px;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: $font-pixel;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    transform: translate(14px, -150%);
+    pointer-events: none;
+
+    // Near the right edge, hang the tag to the left of the dot instead.
+    &--flip {
+      transform: translate(calc(-100% - 14px), -150%);
+    }
+  }
+
+  &__axis-title {
+    position: absolute;
+    font-family: $font-label;
+    font-size: 9px;
+    color: var(--text-soft);
+    text-transform: uppercase;
+
+    &--x {
+      left: 50%;
+      bottom: -40px;
+      transform: translateX(-50%);
+    }
+
+    &--y {
+      left: -50px;
+      top: 50%;
+      transform: translate(-50%, -50%) rotate(-90deg);
+    }
+  }
+}

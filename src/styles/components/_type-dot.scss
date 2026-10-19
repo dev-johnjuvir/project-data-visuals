@@ -1,0 +1,22 @@
+// Block: type-dot - the outlined swatch that marks a type everywhere.
+// Its color arrives as --type-color, set inline from the data.
+.type-dot {
+  flex-shrink: 0;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--type-color);
+
+  &--medium {
+    width: 16px;
+    height: 16px;
+  }
+
+  &--small {
+    width: 12px;
+    height: 12px;
+  }
+
+  &--all {
+    background: var(--paper);
+  }
+}

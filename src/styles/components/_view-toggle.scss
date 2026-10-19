@@ -1,0 +1,30 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// Block: view-toggle - the Chart / Table pill.
+.view-toggle {
+  display: flex;
+  overflow: hidden;
+  border: $border solid var(--ink);
+  border-radius: 999px;
+
+  &__button {
+    @include button-reset;
+    @include pixel(15px);
+    min-height: 44px;
+    padding: space(2) space(4);
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 3px solid var(--yellow);
+      outline-offset: -5px;
+    }
+
+    &--active {
+      background: var(--ink);
+      color: var(--paper);
+    }
+  }
+}

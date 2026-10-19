@@ -17,21 +17,6 @@ export function countByPrimaryType(pokemon: Pokemon[]): TypeCount[] {
     .sort((a, b) => b.count - a.count || a.type.localeCompare(b.type));
 }
 
-export interface TypeShare extends TypeCount {
-  /** Fraction of the whole, 0..1. */
-  share: number;
-}
-
-/** Each type's count as a share of all Pokémon, largest first. */
-export function typeShares(counts: TypeCount[]): TypeShare[] {
-  const total = counts.reduce((sum, c) => sum + c.count, 0);
-  return counts.map((c) => ({ ...c, share: c.count / total }));
-}
-
-export function formatPercent(share: number): string {
-  return `${(share * 100).toFixed(share < 0.1 ? 1 : 0)}%`;
-}
-
 export interface TypeStatRow {
   type: string;
   count: number;
@@ -42,31 +27,70 @@ export interface TypeStatRow {
 export function averageStatsByType(pokemon: Pokemon[]): TypeStatRow[] {
   return countByPrimaryType(pokemon).map(({ type, count }) => {
     const group = pokemon.filter((p) => p.primaryType === type);
-    return { type, count, values: averageStats(group) };
+    return { type, count, values: roundStats(meanStats(group)) };
   });
 }
 
-/** Mean of each base stat across a set of Pokémon, rounded to whole numbers. */
-export function averageStats(pokemon: Pokemon[]): Record<StatKey, number> {
-  return Object.fromEntries(
-    STAT_KEYS.map((key) => [key, Math.round(mean(pokemon, (p) => p.stats[key]) ?? 0)]),
-  ) as Record<StatKey, number>;
+/** Exact mean of each base stat - unrounded, so markers land precisely. */
+export function meanStats(pokemon: Pokemon[]): Record<StatKey, number> {
+  return Object.fromEntries(STAT_KEYS.map((key) => [key, mean(pokemon, (p) => p.stats[key]) ?? 0])) as Record<
+    StatKey,
+    number
+  >;
+}
+
+export function roundStats(stats: Record<StatKey, number>): Record<StatKey, number> {
+  return Object.fromEntries(STAT_KEYS.map((key) => [key, Math.round(stats[key])])) as Record<StatKey, number>;
+}
+
+// Base stat totals are binned on one fixed scale for every generation, so
+// the shapes are comparable. It covers Wishiwashi (175) to Arceus (720).
+export const TOTAL_MIN = 175;
+export const TOTAL_MAX = 725;
+export const TOTAL_BIN = 25;
+
+export interface TotalBin {
+  lo: number;
+  /** Inclusive upper bound, e.g. 175-199. */
+  hi: number;
+  members: Pokemon[];
+}
+
+export function totalBinIndex(total: number): number {
+  const last = (TOTAL_MAX - TOTAL_MIN) / TOTAL_BIN - 1;
+  return Math.min(last, Math.max(0, Math.floor((total - TOTAL_MIN) / TOTAL_BIN)));
+}
+
+export function binStatTotals(pokemon: Pokemon[]): TotalBin[] {
+  const bins: TotalBin[] = [];
+  for (let lo = TOTAL_MIN; lo < TOTAL_MAX; lo += TOTAL_BIN) bins.push({ lo, hi: lo + TOTAL_BIN - 1, members: [] });
+  for (const p of pokemon) bins[totalBinIndex(p.total)].members.push(p);
+  return bins;
+}
+
+export function formatPercent(share: number): string {
+  return `${(share * 100).toFixed(share < 0.1 ? 1 : 0)}%`;
+}
+
+/** "+12", "−8" (a true minus sign) or "±0". */
+export function formatSigned(n: number): string {
+  return n > 0 ? `+${n}` : n < 0 ? `−${Math.abs(n)}` : '±0';
+}
+
+/** Pokédex number, e.g. 25 -> "#025". */
+export function formatDexNumber(id: number): string {
+  return `#${String(id).padStart(3, '0')}`;
 }
 
 const NAME_OVERRIDES: Record<string, string> = {
   'nidoran-f': 'Nidoran ♀',
   'nidoran-m': 'Nidoran ♂',
   'mr-mime': 'Mr. Mime',
-  farfetchd: "Farfetch'd",
+  farfetchd: 'Farfetch’d',
 };
 
 export function formatName(name: string): string {
   return NAME_OVERRIDES[name] ?? name.split('-').map(capitalize).join(' ');
-}
-
-/** CSS color for a Pokémon type - the token defined in Sass, per theme. */
-export function typeColor(type: string): string {
-  return `var(--type-${type})`;
 }
 
 export function capitalize(word: string): string {

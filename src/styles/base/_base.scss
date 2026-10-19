@@ -12,9 +12,13 @@ html {
 
 body {
   margin: 0;
-  background: var(--page);
-  color: var(--text-primary);
-  font-family: $font-sans;
+  min-height: 100vh;
+  // Dotted "graph paper" page.
+  background-color: var(--page);
+  background-image: radial-gradient(var(--page-dot) 1.2px, transparent 1.2px);
+  background-size: 16px 16px;
+  color: var(--ink);
+  font-family: $font-body;
   font-size: 15px;
   line-height: 1.5;
 }
@@ -26,11 +30,19 @@ p {
 }
 
 a {
-  color: var(--series-1);
+  color: inherit;
 }
 
 button,
 select {
   font: inherit;
   color: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0ms !important;
+  }
 }

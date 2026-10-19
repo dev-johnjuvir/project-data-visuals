@@ -1,4 +1,6 @@
-// Block: spinner - a ring with one colored arc.
+@use '../abstracts/mixins' as *;
+
+// Block: spinner - a chunky ring with one ink arc.
 .spinner {
   display: inline-flex;
   align-items: center;
@@ -6,21 +8,16 @@
 
   &__ring {
     display: block;
-    border-radius: 50%;
     border-style: solid;
-    border-color: var(--grid);
-    border-top-color: var(--series-1);
-    animation: spinner-rotate 0.8s linear infinite;
+    border-color: var(--track);
+    border-top-color: var(--ink);
+    border-radius: 50%;
+    animation: spinner-rotate 0.8s steps(8) infinite; // stepped, like a sprite
   }
 
   // The label is for screen readers only; the visible message lives beside it.
   &__label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
+    @include visually-hidden;
   }
 
   &--small &__ring {
@@ -30,15 +27,15 @@
   }
 
   &--large &__ring {
-    width: 40px;
-    height: 40px;
-    border-width: 3px;
+    width: 44px;
+    height: 44px;
+    border-width: 5px;
   }
 
-  // Respect the OS setting: no spinning, a slow fade instead.
+  // Respect the OS setting: no spinning, a slow blink instead.
   @media (prefers-reduced-motion: reduce) {
     &__ring {
-      animation: spinner-pulse 1.6s ease-in-out infinite;
+      animation: spinner-pulse 1.6s steps(2) infinite;
     }
   }
 }

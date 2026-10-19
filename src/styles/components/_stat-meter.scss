@@ -1,0 +1,92 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// Block: stat-meter - six bars with an average marker. The fill color
+// arrives as --type-color on the block, so every row shares it.
+.stat-meter {
+  @include screen;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 18px 14px;
+
+  &__row {
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr) 92px;
+    align-items: center;
+    gap: space(3);
+  }
+
+  &__label {
+    @include pixel(16px);
+  }
+
+  &__track {
+    position: relative;
+    height: 18px;
+    border: $border solid var(--ink);
+    border-radius: 999px;
+    background: var(--track);
+  }
+
+  &__fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-right: $border solid var(--ink);
+    border-radius: 999px;
+    background: var(--type-color);
+    transition: width 250ms ease;
+  }
+
+  // The average: a tall ink tick that pokes out above and below the track.
+  &__tick {
+    position: absolute;
+    top: -8px;
+    bottom: -8px;
+    width: 4px;
+    margin-left: -2px;
+    border-radius: 2px;
+    background: var(--ink);
+  }
+
+  &__value {
+    @include pixel(15px, 400);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+
+    b {
+      font-size: 18px;
+    }
+  }
+
+  &__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    padding-top: space(1);
+    border-top: 2px dashed var(--dim-border);
+    font-size: 13px;
+    color: var(--text-soft);
+  }
+
+  &__key {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__key-fill {
+    width: 22px;
+    height: 10px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: var(--type-color);
+  }
+
+  &__key-tick {
+    width: 4px;
+    height: 16px;
+    border-radius: 2px;
+    background: var(--ink);
+  }
+}

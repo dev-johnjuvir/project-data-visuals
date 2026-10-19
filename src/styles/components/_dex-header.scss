@@ -1,0 +1,103 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// Block: dex-header - the red handheld casing across the top.
+.dex-header {
+  background: var(--dex-red);
+  border-bottom: 6px solid var(--ink);
+  color: var(--paper);
+
+  &__inner {
+    display: flex;
+    flex-direction: column;
+    gap: space(5);
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: space(7) space(6) 32px;
+
+    @media (max-width: 600px) {
+      padding: space(5) space(4) space(6);
+    }
+  }
+
+  &__top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: space(4);
+  }
+
+  &__lights {
+    display: flex;
+    align-items: center;
+    gap: space(2);
+  }
+
+  // The big blue lens: inset shadows fake a glassy highlight and shade.
+  &__lens {
+    width: 34px;
+    height: 34px;
+    border: 4px solid var(--ink);
+    border-radius: 999px;
+    background: var(--lens);
+    box-shadow:
+      inset -6px -6px 0 var(--lens-shade),
+      inset 5px 5px 0 var(--lens-shine);
+  }
+
+  &__light {
+    width: 14px;
+    height: 14px;
+    border: 3px solid var(--ink);
+    border-radius: 999px;
+
+    &--yellow {
+      background: var(--yellow);
+    }
+
+    &--green {
+      background: var(--light-green);
+    }
+
+    &--red {
+      background: var(--light-red);
+    }
+  }
+
+  &__breadcrumb {
+    @include label(11px);
+    letter-spacing: 0.04em;
+    text-transform: none;
+  }
+
+  &__main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: space(6);
+  }
+
+  &__intro {
+    display: flex;
+    flex-direction: column;
+    gap: space(2);
+    min-width: 0;
+  }
+
+  &__title {
+    font-family: $font-pixel;
+    font-size: clamp(40px, 6vw, 68px);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    text-shadow: 4px 4px 0 var(--ink);
+  }
+
+  &__lede {
+    max-width: 620px;
+    font-size: 17px;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+}

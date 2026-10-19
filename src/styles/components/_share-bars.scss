@@ -1,0 +1,63 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// Block: share-bars - one tappable row per type: name, bar, count · share.
+.share-bars {
+  @include screen;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px space(4);
+
+  &__row {
+    @include button-reset;
+    @include focus-ring;
+    display: grid;
+    grid-template-columns: 84px minmax(0, 1fr) 70px;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 30px;
+    padding: 2px space(1);
+    border-radius: 6px;
+    font-family: $font-pixel;
+    color: var(--ink);
+    cursor: pointer;
+    transition: opacity 150ms ease;
+
+    &:hover {
+      background: var(--track);
+    }
+
+    &--dimmed {
+      opacity: 0.35;
+    }
+  }
+
+  &__type {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  &__track {
+    display: block;
+    height: 16px;
+    overflow: hidden;
+    border: 2px solid var(--ink);
+    border-radius: 4px;
+    background: var(--track);
+  }
+
+  &__fill {
+    display: block;
+    height: 100%;
+    border-right: 2px solid var(--ink);
+    background: var(--type-color);
+  }
+
+  &__value {
+    font-size: 14px;
+    text-align: right;
+    white-space: nowrap;
+  }
+}

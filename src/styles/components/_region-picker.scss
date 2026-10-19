@@ -1,0 +1,60 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// Block: region-picker - one pressable key per generation, in the header.
+.region-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: space(2);
+
+  &__label {
+    @include label(10px);
+  }
+
+  &__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: space(2);
+  }
+
+  &__option {
+    @include pressable;
+    @include focus-ring;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+    min-height: 52px;
+    padding: 6px space(2);
+    border: $border solid var(--ink);
+    border-radius: 10px;
+    color: var(--ink);
+    font-family: $font-pixel;
+    line-height: 1.05;
+    text-decoration: none;
+
+    &--active {
+      @include pressed;
+
+      &:hover {
+        @include pressed;
+      }
+    }
+  }
+
+  &__numeral {
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  &__region {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 13px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+}

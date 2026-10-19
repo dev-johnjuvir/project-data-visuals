@@ -1,70 +1,81 @@
-@use 'sass:list';
 @use '../abstracts/tokens' as *;
 @use '../abstracts/mixins' as *;
 
-// Block: heatmap - generates one modifier per color step with a Sass loop.
+// Block: heatmap - a CSS grid; each cell's color is computed from its value.
 .heatmap {
   display: flex;
   flex-direction: column;
-  gap: space(3);
+  gap: 14px;
+
+  // Scrolls sideways inside its own frame on narrow screens, so the page
+  // itself never scrolls horizontally.
+  &__screen {
+    @include screen;
+    overflow-x: auto;
+    padding: space(4);
+  }
+
+  &__grid {
+    display: flex;
+    flex-direction: column;
+    gap: space(1);
+    min-width: 560px;
+  }
 
   &__row {
+    display: grid;
+    grid-template-columns: 120px repeat(6, minmax(0, 1fr));
+    gap: space(1);
     transition: opacity 150ms ease;
+
+    &--head {
+      @include pixel(15px);
+      text-align: center;
+    }
 
     &--dimmed {
       opacity: 0.35;
     }
+  }
 
-    &--active .heatmap__row-label {
-      fill: var(--text-primary);
-      font-weight: 700;
+  &__type {
+    @include button-reset;
+    @include pixel(15px);
+    @include focus-ring;
+    display: flex;
+    align-items: center;
+    gap: space(2);
+    min-height: 40px;
+    padding: 0 space(2);
+    border: 2px solid var(--ink);
+    border-radius: 8px;
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--track);
+    }
+
+    &--active,
+    &--active:hover {
+      background: var(--yellow);
     }
   }
 
-  &__cell--hovered {
-    stroke: var(--text-primary);
-    stroke-width: 2;
-  }
-
-  &__value {
-    font-size: 11px;
-    font-weight: 500;
+  &__cell {
+    @include pixel(19px, 700);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    border-radius: 6px;
+    color: var(--ink);
     font-variant-numeric: tabular-nums;
-    pointer-events: none;
-  }
 
-  $steps: list.length($sequential);
-
-  @for $i from 0 to $steps {
-    $light-color: list.nth($sequential, $i + 1);
-    // Dark mode reads the ramp backwards: low values are dark, near the surface.
-    $dark-color: list.nth($sequential, $steps - $i);
-
-    &__cell--step-#{$i} {
-      fill: $light-color;
-      background-color: $light-color;
-
-      @include dark {
-        fill: $dark-color;
-        background-color: $dark-color;
-      }
-    }
-
-    // Pick ink that stays readable on each step.
-    &__value--step-#{$i} {
-      @if $i < 3 {
-        fill: #0b0b0b;
-      } @else {
-        fill: #ffffff;
-      }
-
-      @include dark {
-        @if $i < 4 {
-          fill: #f0efec;
-        } @else {
-          fill: #0b0b0b;
-        }
-      }
+    // Past ~58% of the ramp the background is dark enough to need white text.
+    &--dark {
+      color: var(--paper);
     }
   }
 
@@ -72,35 +83,20 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: space(2);
-
-    @include from($breakpoint-md) {
-      padding-left: 76px; // align with the cells, past the row labels
-    }
-    font-size: 0.75rem;
-    color: var(--text-secondary);
+    gap: space(3);
+    font-size: 13px;
+    color: var(--text-soft);
   }
 
-  &__legend-steps {
-    display: flex;
-    gap: 2px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
+  &__legend-value {
+    font-family: $font-pixel;
   }
 
-  &__legend-step {
-    width: 28px;
-    height: 10px;
-    border-radius: 2px;
-  }
-
-  &__legend-label {
-    font-variant-numeric: tabular-nums;
-  }
-
-  &__legend-caption {
-    margin-left: space(2);
-    color: var(--text-muted);
+  &__ramp {
+    width: 220px;
+    max-width: 100%;
+    height: 14px;
+    border: 2px solid var(--ink);
+    border-radius: 4px;
   }
 }

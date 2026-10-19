@@ -1,0 +1,52 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// Block: sprite-screen - the scanned entry's sprite on a little LCD.
+.sprite-screen {
+  @include screen;
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 104px;
+  height: 104px;
+
+  @container panel (max-width: 440px) {
+    width: 88px;
+    height: 88px;
+  }
+  overflow: hidden;
+  // Faint scanlines, like an old handheld display.
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 3px,
+    rgba(27, 27, 47, 0.04) 3px 4px
+  );
+
+  &__image {
+    width: 85%;
+    height: 85%;
+    object-fit: contain;
+    image-rendering: pixelated; // keep hard pixel edges when scaled
+    transition: opacity 150ms ease;
+  }
+
+  // Hide the half-downloaded image until it's ready - the spinner shows instead.
+  &--loading &__image {
+    opacity: 0;
+  }
+
+  &__overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &--empty {
+      @include pixel(32px, 700);
+      color: var(--dim-border);
+    }
+  }
+}

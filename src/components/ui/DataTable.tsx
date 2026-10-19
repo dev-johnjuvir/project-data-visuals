@@ -6,14 +6,17 @@ export interface Column {
 
 export type Row = Record<string, string | number>;
 
-interface DataTableProps {
-  caption: string;
+export interface TableData {
   columns: Column[];
   rows: Row[];
+  /** Optional summary row, e.g. a total. */
+  footer?: Row;
 }
 
-/** The table twin of every chart: the accessible way to read exact values. */
-export function DataTable({ caption, columns, rows }: DataTableProps) {
+/** The table twin of a chart: the accessible way to read exact values. */
+export function DataTable({ caption, columns, rows, footer }: TableData & { caption: string }) {
+  const cellClass = (base: string, col: Column) => `${base}${col.numeric ? ` ${base}--numeric` : ''}`;
+
   return (
     <div className="data-table">
       <table className="data-table__table">
@@ -21,11 +24,7 @@ export function DataTable({ caption, columns, rows }: DataTableProps) {
         <thead>
           <tr>
             {columns.map((col) => (
-              <th
-                key={col.key}
-                scope="col"
-                className={`data-table__head${col.numeric ? ' data-table__head--numeric' : ''}`}
-              >
+              <th key={col.key} scope="col" className={cellClass('data-table__head', col)}>
                 {col.label}
               </th>
             ))}
@@ -35,15 +34,21 @@ export function DataTable({ caption, columns, rows }: DataTableProps) {
           {rows.map((row, i) => (
             <tr key={i} className="data-table__row">
               {columns.map((col) => (
-                <td
-                  key={col.key}
-                  className={`data-table__cell${col.numeric ? ' data-table__cell--numeric' : ''}`}
-                >
+                <td key={col.key} className={cellClass('data-table__cell', col)}>
                   {row[col.key]}
                 </td>
               ))}
             </tr>
           ))}
+          {footer && (
+            <tr className="data-table__row data-table__row--total">
+              {columns.map((col) => (
+                <td key={col.key} className={cellClass('data-table__cell', col)}>
+                  {footer[col.key]}
+                </td>
+              ))}
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

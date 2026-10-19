@@ -4,18 +4,31 @@
 @use 'abstracts/tokens';
 @use 'base/base';
 
+// Page shell
 @use 'components/page';
-@use 'components/dashboard';
-@use 'components/filter-bar';
-@use 'components/generation-picker';
+@use 'components/dex-header';
+@use 'components/region-picker';
+
+// Controls
+@use 'components/type-filter';
+@use 'components/type-chip';
+@use 'components/type-dot';
 @use 'components/stat-tile';
-@use 'components/chart-card';
-@use 'components/chart';
+@use 'components/dex-list';
+
+// Readouts
+@use 'components/dashboard';
+@use 'components/panel';
+@use 'components/view-toggle';
+@use 'components/scanner';
+@use 'components/sprite-screen';
+@use 'components/stat-meter';
+@use 'components/scatter';
+@use 'components/share-bars';
+@use 'components/histogram';
 @use 'components/heatmap';
-@use 'components/type-donut';
-@use 'components/legend';
-@use 'components/tooltip';
 @use 'components/data-table';
-@use 'components/pokemon-profile';
+
+// States
 @use 'components/spinner';
 @use 'components/loading-panel';

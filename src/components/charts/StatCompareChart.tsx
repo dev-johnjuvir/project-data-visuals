@@ -1,103 +1,57 @@
-'use client';
-
-import { scaleLinear } from 'd3';
-import { useState } from 'react';
-import { useElementWidth } from '@/hooks/useElementWidth';
-import { horizontalBarPath } from '@/lib/geometry';
 import { formatName } from '@/lib/transforms';
+import { pct, typeStyle } from '@/lib/style';
 import { STAT_KEYS, STAT_LABELS, type Pokemon, type StatKey } from '@/lib/types';
-import { ChartSvg } from '@/components/ui/ChartSvg';
-import { Tooltip, TooltipRow } from '@/components/ui/Tooltip';
 
-// Lesson: grouped bars compare two series on the SAME scale. A radar chart is
-// the popular choice for stats, but angles and areas are hard to read
-// accurately - aligned bars on a shared baseline are far easier to compare.
+// Lesson: compare one entry against the average with a bar + a marker on a
+// shared, FIXED scale. The fill is this Pokémon; the ink tick is the
+// generation average. Fixing the scale at 0-255 (the highest possible base
+// stat) keeps bar lengths comparable as you flip between Pokémon.
 
-const MARGIN = { top: 4, right: 40, bottom: 28, left: 64 };
-const ROW_HEIGHT = 40;
-const BAR_HEIGHT = 12;
-const BAR_GAP = 2;
-/** The highest base stat in the main series games is 255. */
 const MAX_STAT = 255;
 
 interface StatCompareChartProps {
   pokemon: Pokemon;
+  /** Exact (unrounded) averages, so the tick lands precisely. */
   average: Record<StatKey, number>;
   averageLabel: string;
 }
 
 export function StatCompareChart({ pokemon, average, averageLabel }: StatCompareChartProps) {
-  const [ref, width] = useElementWidth<HTMLDivElement>();
-  const [hovered, setHovered] = useState<StatKey | null>(null);
-
-  const height = MARGIN.top + STAT_KEYS.length * ROW_HEIGHT + MARGIN.bottom;
-  const plotBottom = MARGIN.top + STAT_KEYS.length * ROW_HEIGHT;
-  const innerWidth = Math.max(0, width - MARGIN.left - MARGIN.right);
-  // A fixed domain keeps bar lengths comparable when you switch Pokémon.
-  const x = scaleLinear().domain([0, MAX_STAT]).range([0, innerWidth]);
-  const groupTop = (ROW_HEIGHT - (BAR_HEIGHT * 2 + BAR_GAP)) / 2;
-
   return (
-    <div ref={ref} className="chart">
-      <ChartSvg width={width} height={height} label={`${formatName(pokemon.name)} base stats compared with the ${averageLabel}`}>
-          {[0, 50, 100, 150, 200, 250].map((tick) => (
-            <g key={tick} transform={`translate(${MARGIN.left + x(tick)},0)`}>
-              <line className="chart__grid" y1={MARGIN.top} y2={plotBottom} />
-              <text className="chart__tick" y={plotBottom + 18} textAnchor="middle">
-                {tick}
-              </text>
-            </g>
-          ))}
+    <div className="stat-meter" style={typeStyle(pokemon.primaryType)}>
+      {STAT_KEYS.map((key) => {
+        const value = pokemon.stats[key];
+        const avg = average[key];
+        return (
+          <div key={key} className="stat-meter__row">
+            <span className="stat-meter__label">{STAT_LABELS[key]}</span>
+            <div
+              className="stat-meter__track"
+              role="img"
+              aria-label={`${STAT_LABELS[key]}: ${value}, average ${Math.round(avg)}`}
+            >
+              {/* A 3% minimum keeps very low stats visible as a sliver */}
+              <div className="stat-meter__fill" style={{ width: pct(Math.max(0.03, value / MAX_STAT)) }} />
+              <div className="stat-meter__tick" style={{ left: pct(avg / MAX_STAT) }} />
+            </div>
+            <span className="stat-meter__value">
+              <b>{value}</b> / {Math.round(avg)}
+            </span>
+          </div>
+        );
+      })}
 
-          {STAT_KEYS.map((key, i) => {
-            const y = MARGIN.top + i * ROW_HEIGHT + groupTop;
-            const value = pokemon.stats[key];
-            return (
-              <g key={key}>
-                <rect
-                  className={`chart__hit${hovered === key ? ' chart__hit--active' : ''}`}
-                  x={0}
-                  y={MARGIN.top + i * ROW_HEIGHT}
-                  width={width}
-                  height={ROW_HEIGHT}
-                  onMouseEnter={() => setHovered(key)}
-                  onMouseLeave={() => setHovered(null)}
-                />
-                <text className="chart__category" x={MARGIN.left - 8} y={MARGIN.top + i * ROW_HEIGHT + ROW_HEIGHT / 2} dy="0.35em" textAnchor="end">
-                  {STAT_LABELS[key]}
-                </text>
-                <path className="chart__bar" d={horizontalBarPath(MARGIN.left, y, x(value), BAR_HEIGHT)} />
-                <path
-                  className="chart__bar chart__bar--secondary"
-                  d={horizontalBarPath(MARGIN.left, y + BAR_HEIGHT + BAR_GAP, x(average[key]), BAR_HEIGHT)}
-                />
-                {/* Direct-label the series that matters; the average stays in tooltip + table */}
-                <text className="chart__value" x={MARGIN.left + x(value) + 6} y={y + BAR_HEIGHT / 2} dy="0.35em">
-                  {value}
-                </text>
-              </g>
-            );
-          })}
-
-          <line className="chart__baseline" x1={MARGIN.left} x2={MARGIN.left} y1={MARGIN.top} y2={plotBottom} />
-      </ChartSvg>
-
-      {hovered && (
-        <Tooltip
-          x={MARGIN.left + x(Math.max(pokemon.stats[hovered], average[hovered]))}
-          y={MARGIN.top + STAT_KEYS.indexOf(hovered) * ROW_HEIGHT + ROW_HEIGHT / 2}
-          containerWidth={width}
-        >
-          <p className="tooltip__title">{STAT_LABELS[hovered]}</p>
-          <TooltipRow label={formatName(pokemon.name)} value={pokemon.stats[hovered]} color="var(--series-1)" />
-          <TooltipRow label={averageLabel} value={average[hovered]} color="var(--series-2)" />
-          <TooltipRow label="Difference" value={formatDelta(pokemon.stats[hovered] - average[hovered])} />
-        </Tooltip>
-      )}
+      <div className="stat-meter__legend">
+        <span className="stat-meter__key">
+          <span className="stat-meter__key-fill" aria-hidden="true" />
+          {formatName(pokemon.name)}
+        </span>
+        <span className="stat-meter__key">
+          <span className="stat-meter__key-tick" aria-hidden="true" />
+          {averageLabel}
+        </span>
+        <span>Scale 0 to {MAX_STAT}</span>
+      </div>
     </div>
   );
-}
-
-function formatDelta(n: number): string {
-  return n > 0 ? `+${n}` : n < 0 ? `−${Math.abs(n)}` : '0';
 }

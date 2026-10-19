@@ -1,100 +1,80 @@
-// Design tokens: Sass maps compiled into CSS custom properties.
-// Sass gives us the maps and loops at build time; CSS variables let the
-// browser swap the whole theme at runtime (light/dark) without recompiling.
+// Design tokens for the "field dex" look: Sass maps compiled into CSS
+// custom properties. Sass gives us maps and loops at build time; the CSS
+// variables are what components read at runtime.
 
-$light: (
-  'page': #f9f9f7,
-  'surface-1': #fcfcfb,
-  'text-primary': #0b0b0b,
-  'text-secondary': #52514e,
-  'text-muted': #898781,
-  'grid': #e1e0d9,
-  'baseline': #c3c2b7,
-  'border': rgba(11, 11, 11, 0.1),
-  'hover-wash': rgba(11, 11, 11, 0.04),
-  'series-1': #2a78d6,
-  'series-2': #eb6834,
-  'mark-muted': #d4d3cc,
+$colors: (
+  'ink': #1b1b2f,
+  'paper': #ffffff,
+  'page': #e9e6df,
+  'page-dot': #d3cfc4,
+  'dex-red': #c4302a,
+  'label-red': #9b231a,
+  'yellow': #f7c948,
+  'screen': #f3f6ee,
+  'cream': #fffdf6,
+  'track': #e2ded3,
+  'dim': #dad7ce,
+  'dim-border': #b9b5aa,
+  'text-muted': #4a4d5c,
+  'text-soft': #3d4050,
+  'grid': #cbd2c2,
+  'rule': #d6d2c6,
+  'histogram': #8fb3e8,
+  'up': #1e6b34,
+  'up-bg': #d7f2dd,
+  'down': #9b231a,
+  'down-bg': #ffe1dc,
+  'lens': #8fd3ff,
+  'lens-shade': #4fa3da,
+  'lens-shine': #e8f7ff,
+  'light-green': #5bd06e,
+  'light-red': #ff8a80,
 );
 
-$dark: (
-  'page': #0d0d0d,
-  'surface-1': #1a1a19,
-  'text-primary': #f0efec,
-  'text-secondary': #c3c2b7,
-  'text-muted': #898781,
-  'grid': #2c2c2a,
-  'baseline': #383835,
-  'border': rgba(255, 255, 255, 0.1),
-  'hover-wash': rgba(255, 255, 255, 0.05),
-  'series-1': #3987e5,
-  'series-2': #d95926,
-  'mark-muted': #43433f,
+// Pokémon type colors, softened to sit on the cream "screen". Every mark
+// that wears one also gets a 2-3px ink outline, so even the palest (Ice,
+// Fairy) stays visible - the outline carries the contrast, not the fill.
+// Dark, Steel and Flying aren't in the Gen I mockup; they're added in the
+// same pastel key for later generations.
+$types: (
+  'normal': #c9c2a5,
+  'fire': #f59f5f,
+  'water': #7fb0f2,
+  'electric': #f4d44e,
+  'grass': #82cc6e,
+  'ice': #a3e0e3,
+  'fighting': #e07468,
+  'poison': #be86cf,
+  'ground': #e0c47a,
+  'flying': #b9c8f5,
+  'psychic': #f48aa9,
+  'bug': #b5c94a,
+  'rock': #c7ae63,
+  'ghost': #9a8dcb,
+  'dragon': #9a8ef2,
+  'dark': #8e7c6e,
+  'steel': #b8bccb,
+  'fairy': #f2b1dd,
 );
 
-// Pokémon type colors: the games' familiar hues, with lightness stepped per
-// theme so every bar clears 3:1 contrast against the chart surface.
-// 18 hues is far past the 8 a chart can keep apart by color alone, which is
-// fine here only because every mark is also labelled with its type name.
-$types-light: (
-  'normal': #969468,
-  'fire': #e0741e,
-  'water': #6390f0,
-  'electric': #ad9007,
-  'grass': #58a422,
-  'ice': #5b9c9a,
-  'fighting': #c22e28,
-  'poison': #a33ea1,
-  'ground': #b08e30,
-  'flying': #9d83e5,
-  'psychic': #f95587,
-  'bug': #8a9a09,
-  'rock': #a69121,
-  'ghost': #735797,
-  'dragon': #6f35fc,
-  'dark': #705746,
-  'steel': #9090a6,
-  'fairy': #c979a1,
-);
-
-$types-dark: (
-  'normal': #a8a77a,
-  'fire': #ee8130,
-  'water': #6390f0,
-  'electric': #f7d02c,
-  'grass': #7ac74c,
-  'ice': #96d9d6,
-  'fighting': #c22e28,
-  'poison': #a33ea1,
-  'ground': #e2bf65,
-  'flying': #a98ff3,
-  'psychic': #f95587,
-  'bug': #a6b91a,
-  'rock': #b6a136,
-  'ghost': #765a9a,
-  'dragon': #7037fe,
-  'dark': #7a6150,
-  'steel': #b7b7ce,
-  'fairy': #d685ad,
-);
-
-// Sequential blue ramp, light -> dark (heatmap). On a dark surface the ramp
-// runs the other way, so "low" always recedes into the background.
-$sequential: (#cde2fb, #9ec5f4, #6da7ec, #3987e5, #256abf, #184f95, #0d366b);
-
-$font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+// Fonts come from next/font (see app/layout.tsx), exposed as CSS variables.
+$font-pixel: var(--font-pixel), monospace; // headings, numbers, buttons
+$font-label: var(--font-label), monospace; // tiny all-caps 8-bit labels
+$font-body: var(--font-body), system-ui, sans-serif; // running text
 
 $space: (
   1: 4px,
   2: 8px,
   3: 12px,
   4: 16px,
-  5: 24px,
-  6: 32px,
-  7: 48px,
+  5: 20px,
+  6: 24px,
+  7: 28px,
+  8: 48px,
 );
 
-$radius: 12px;
+$border: 3px;
+$shadow-offset: 6px;
 $breakpoint-md: 900px;
 
 @mixin emit($map, $prefix: '') {
@@ -105,20 +85,6 @@ $breakpoint-md: 900px;
 
 :root {
   color-scheme: light;
-  @include emit($light);
-  @include emit($types-light, 'type-');
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    color-scheme: dark;
-    @include emit($dark);
-    @include emit($types-dark, 'type-');
-  }
-}
-
-:root[data-theme='dark'] {
-  color-scheme: dark;
-  @include emit($dark);
-  @include emit($types-dark, 'type-');
+  @include emit($colors);
+  @include emit($types, 'type-');
 }

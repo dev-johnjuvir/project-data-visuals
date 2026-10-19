@@ -1,168 +1,89 @@
-'use client';
-
-import { Delaunay, max, maxIndex, scaleLinear } from 'd3';
-import { useMemo, useState, type MouseEvent } from 'react';
-import { useElementWidth } from '@/hooks/useElementWidth';
-import { capitalize, formatName } from '@/lib/transforms';
+import { max, range } from 'd3';
+import { useMemo } from 'react';
+import { formatDexNumber, formatName } from '@/lib/transforms';
+import { pct, typeStyle } from '@/lib/style';
 import type { Pokemon } from '@/lib/types';
-import { ChartSvg } from '@/components/ui/ChartSvg';
-import { Tooltip, TooltipRow } from '@/components/ui/Tooltip';
 
-// Lesson: a scatter plot shows the relationship between two measures.
-// With 151 overlapping dots, hovering an exact 8px dot is frustrating, so we
-// use a Delaunay "nearest point" lookup - the pointer snaps to the closest dot.
+// Lesson: a scatter plot shows how two measures relate. Here each dot is a
+// real <button> positioned with percentages instead of an SVG circle:
+//  - it renders on the server at any width, no measuring needed;
+//  - every dot is focusable and announced, so the chart works by keyboard.
+// The axes always start at 0 and round up to a clean step, so a generation
+// with a 230-defense outlier (Shuckle) still fits.
 
-const MARGIN = { top: 16, right: 24, bottom: 48, left: 52 };
-const HEIGHT = 380;
-const DOT_RADIUS = 4;
-const SNAP_DISTANCE = 32;
+const X_STEP = 25;
+const Y_STEP = 50;
 
 interface AttackDefenseScatterProps {
   pokemon: Pokemon[];
   highlight: string | null;
-  selectedId: number;
+  selected: Pokemon;
   onSelect: (id: number) => void;
 }
 
-export function AttackDefenseScatter({ pokemon, highlight, selectedId, onSelect }: AttackDefenseScatterProps) {
-  const [ref, width] = useElementWidth<HTMLDivElement>();
-  const [hovered, setHovered] = useState<number | null>(null);
+export function AttackDefenseScatter({ pokemon, highlight, selected, onSelect }: AttackDefenseScatterProps) {
+  const xMax = Math.max(150, Math.ceil((max(pokemon, (p) => p.stats.attack) ?? 0) / X_STEP) * X_STEP);
+  const yMax = Math.max(200, Math.ceil((max(pokemon, (p) => p.stats.defense) ?? 0) / Y_STEP) * Y_STEP);
+  const x = (attack: number) => attack / xMax;
+  const y = (defense: number) => 1 - defense / yMax;
 
-  const innerWidth = Math.max(0, width - MARGIN.left - MARGIN.right);
-  const innerHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
-
-  const x = useMemo(
-    () => scaleLinear().domain([0, max(pokemon, (p) => p.stats.attack) ?? 1]).nice().range([0, innerWidth]),
-    [pokemon, innerWidth],
-  );
-  const y = useMemo(
-    () => scaleLinear().domain([0, max(pokemon, (p) => p.stats.defense) ?? 1]).nice().range([innerHeight, 0]),
-    [pokemon, innerHeight],
-  );
-
-  const delaunay = useMemo(
-    () => Delaunay.from(pokemon, (p) => x(p.stats.attack), (p) => y(p.stats.defense)),
-    [pokemon, x, y],
-  );
-
-  // Draw the muted dots first so highlighted ones always sit on top.
+  // Paint order = stacking order: dimmed dots first, the selected one last.
   const ordered = useMemo(() => {
-    if (!highlight) return pokemon;
-    return [...pokemon].sort(
-      (a, b) => Number(a.primaryType === highlight) - Number(b.primaryType === highlight),
-    );
-  }, [pokemon, highlight]);
+    const isLit = (p: Pokemon) => highlight === null || p.primaryType === highlight;
+    const rest = pokemon.filter((p) => p.id !== selected.id).sort((a, b) => Number(isLit(a)) - Number(isLit(b)));
+    return [...rest, selected];
+  }, [pokemon, highlight, selected]);
 
-  const labelled = new Set([
-    pokemon[maxIndex(pokemon, (p) => p.stats.attack)].id,
-    pokemon[maxIndex(pokemon, (p) => p.stats.defense)].id,
-    selectedId,
-  ]);
-
-  function handleMove(event: MouseEvent<SVGRectElement>) {
-    const box = event.currentTarget.getBoundingClientRect();
-    const mx = event.clientX - box.left;
-    const my = event.clientY - box.top;
-    const index = delaunay.find(mx, my);
-    const p = pokemon[index];
-    const distance = Math.hypot(x(p.stats.attack) - mx, y(p.stats.defense) - my);
-    setHovered(distance <= SNAP_DISTANCE ? index : null);
-  }
-
-  const hoveredPokemon = hovered === null ? null : pokemon[hovered];
+  const tagFlips = x(selected.stats.attack) > 0.75;
 
   return (
-    <div ref={ref} className="chart">
-      <ChartSvg width={width} height={HEIGHT} label="Scatter plot of attack versus defense">
-          <g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
-            {y.ticks(5).map((tick) => (
-              <g key={`y${tick}`} transform={`translate(0,${y(tick)})`}>
-                <line className="chart__grid" x2={innerWidth} />
-                <text className="chart__tick" x={-8} dy="0.35em" textAnchor="end">
-                  {tick}
-                </text>
-              </g>
-            ))}
-            {x.ticks(6).map((tick) => (
-              <text key={`x${tick}`} className="chart__tick" x={x(tick)} y={innerHeight + 18} textAnchor="middle">
-                {tick}
-              </text>
-            ))}
-            <line className="chart__baseline" y1={innerHeight} y2={innerHeight} x2={innerWidth} />
+    <div className="scatter">
+      <div className="scatter__plot">
+        {range(0, yMax + 1, Y_STEP).map((v) => (
+          <div key={`y${v}`} className="scatter__gridline" style={{ bottom: pct(v / yMax) }} aria-hidden="true">
+            <span className="scatter__tick scatter__tick--y">{v}</span>
+          </div>
+        ))}
+        {range(0, xMax + 1, X_STEP).map((v) => (
+          <span key={`x${v}`} className="scatter__tick scatter__tick--x" style={{ left: pct(v / xMax) }} aria-hidden="true">
+            {v}
+          </span>
+        ))}
 
-            <text className="chart__axis-title" x={innerWidth / 2} y={innerHeight + 40} textAnchor="middle">
-              Attack
-            </text>
-            <text className="chart__axis-title" transform={`translate(-38,${innerHeight / 2}) rotate(-90)`} textAnchor="middle">
-              Defense
-            </text>
-
-            {ordered.map((p) => {
-              const isMuted = highlight !== null && p.primaryType !== highlight;
-              const modifiers = [
-                // A highlighted type keeps the same color it has in the bar chart.
-                highlight !== null && !isMuted && `chart__dot--type-${highlight}`,
-                isMuted && 'chart__dot--muted',
-                p.id === selectedId && 'chart__dot--selected',
-              ].filter(Boolean);
-              return (
-                <circle
-                  key={p.id}
-                  className={['chart__dot', ...modifiers].join(' ')}
-                  cx={x(p.stats.attack)}
-                  cy={y(p.stats.defense)}
-                  r={p.id === selectedId ? DOT_RADIUS + 2 : DOT_RADIUS}
-                />
-              );
-            })}
-
-            {/* Selective direct labels: the two extremes and the selected Pokémon */}
-            {pokemon
-              .filter((p) => labelled.has(p.id))
-              .map((p) => (
-                <text
-                  key={`label-${p.id}`}
-                  className="chart__annotation"
-                  x={x(p.stats.attack)}
-                  y={y(p.stats.defense) - 10}
-                  textAnchor={x(p.stats.attack) > innerWidth - 60 ? 'end' : 'middle'}
-                >
-                  {formatName(p.name)}
-                </text>
-              ))}
-
-            {hoveredPokemon && (
-              <circle className="chart__focus-ring" cx={x(hoveredPokemon.stats.attack)} cy={y(hoveredPokemon.stats.defense)} r={DOT_RADIUS + 4} />
-            )}
-
-            {/* Transparent overlay captures the pointer for the nearest-point lookup */}
-            <rect
-              className="chart__overlay"
-              width={innerWidth}
-              height={innerHeight}
-              onMouseMove={handleMove}
-              onMouseLeave={() => setHovered(null)}
-              onClick={() => hoveredPokemon && onSelect(hoveredPokemon.id)}
-              style={{ cursor: hoveredPokemon ? 'pointer' : 'default' }}
+        {ordered.map((p) => {
+          const isSelected = p.id === selected.id;
+          const isLit = highlight === null || p.primaryType === highlight;
+          const label = `${formatDexNumber(p.id)} ${formatName(p.name)}, Attack ${p.stats.attack}, Defense ${p.stats.defense}`;
+          const modifiers = [
+            isSelected && 'scatter__dot--selected',
+            !isSelected && !isLit && 'scatter__dot--dimmed',
+            !isSelected && isLit && highlight !== null && 'scatter__dot--lit',
+          ].filter(Boolean);
+          return (
+            <button
+              key={p.id}
+              type="button"
+              className={['scatter__dot', ...modifiers].join(' ')}
+              style={typeStyle(p.primaryType, { left: pct(x(p.stats.attack)), top: pct(y(p.stats.defense)) })}
+              aria-label={label}
+              aria-pressed={isSelected}
+              title={label}
+              onClick={() => onSelect(p.id)}
             />
-          </g>
-      </ChartSvg>
+          );
+        })}
 
-      {hoveredPokemon && (
-        <Tooltip
-          x={MARGIN.left + x(hoveredPokemon.stats.attack)}
-          y={MARGIN.top + y(hoveredPokemon.stats.defense)}
-          containerWidth={width}
+        <div
+          className={`scatter__tag${tagFlips ? ' scatter__tag--flip' : ''}`}
+          style={{ left: pct(x(selected.stats.attack)), top: pct(y(selected.stats.defense)) }}
+          aria-hidden="true"
         >
-          <p className="tooltip__title">
-            #{hoveredPokemon.id} {formatName(hoveredPokemon.name)}
-          </p>
-          <TooltipRow label="Type" value={hoveredPokemon.types.map(capitalize).join(' / ')} />
-          <TooltipRow label="Attack" value={hoveredPokemon.stats.attack} />
-          <TooltipRow label="Defense" value={hoveredPokemon.stats.defense} />
-          <p className="tooltip__hint">Click to inspect</p>
-        </Tooltip>
-      )}
+          {formatName(selected.name)}
+        </div>
+
+        <span className="scatter__axis-title scatter__axis-title--x">Attack</span>
+        <span className="scatter__axis-title scatter__axis-title--y">Defense</span>
+      </div>
     </div>
   );
 }

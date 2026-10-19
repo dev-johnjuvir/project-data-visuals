@@ -18,8 +18,23 @@ interface ApiPokemon {
   stats: { base_stat: number; stat: { name: string } }[];
   sprites: {
     front_default: string | null;
-    other?: { 'official-artwork'?: { front_default: string | null } };
+    other?: { showdown?: { front_default: string | null } };
+    versions?: { 'generation-v'?: { 'black-white'?: { animated?: { front_default: string | null } } } };
   };
+}
+
+/**
+ * Best available sprite, most animated first:
+ *  1. Showdown GIFs - nearly every Pokémon through Gen IX
+ *  2. Black/White animated GIFs - Gen I-V only
+ *  3. The still front sprite - always present
+ */
+function pickSprite(sprites: ApiPokemon['sprites']): string | null {
+  return (
+    sprites.other?.showdown?.front_default ??
+    sprites.versions?.['generation-v']?.['black-white']?.animated?.front_default ??
+    sprites.front_default
+  );
 }
 
 function toPokemon(raw: ApiPokemon): Pokemon {
@@ -35,7 +50,7 @@ function toPokemon(raw: ApiPokemon): Pokemon {
     primaryType: types[0],
     stats,
     total: STAT_KEYS.reduce((sum, key) => sum + stats[key], 0),
-    sprite: raw.sprites.other?.['official-artwork']?.front_default ?? raw.sprites.front_default,
+    sprite: pickSprite(raw.sprites),
   };
 }
 

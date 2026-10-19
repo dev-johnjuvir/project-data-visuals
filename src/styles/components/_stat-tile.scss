@@ -1,29 +1,43 @@
+@use '../abstracts/tokens' as *;
 @use '../abstracts/mixins' as *;
 
 // Block: stat-tile - a single headline number.
 .stat-tile {
-  @include card;
-  padding: space(4);
+  @include hard-card(16px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px space(5);
 
   &__label {
-    @include eyebrow;
+    @include label(10px);
+    color: var(--label-red);
   }
 
   &__value {
-    margin-top: space(1);
-    font-size: 2rem;
-    font-weight: 700;
-    line-height: 1.1;
-    // Proportional figures for big standalone numbers (not tabular-nums).
-    font-variant-numeric: proportional-nums;
+    @include pixel(48px, 700);
+    line-height: 1;
   }
 
   &__detail {
-    margin-top: space(1);
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
     overflow: hidden;
+    font-size: 14px;
+    color: var(--text-muted);
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  // The featured tile: yellow, and its text all in ink.
+  &--accent {
+    background: var(--yellow);
+  }
+
+  &--accent &__label {
+    color: var(--ink);
+  }
+
+  &--accent &__detail {
+    font-weight: 500;
+    color: var(--ink);
   }
 }

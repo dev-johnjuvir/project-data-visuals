@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { Dashboard } from '@/components/Dashboard';
 import { LoadingPanel } from '@/components/LoadingPanel';
+import { RegionPicker } from '@/components/RegionPicker';
 import { GENERATIONS, generationSize, getGeneration, type Generation } from '@/lib/generations';
 import { getPokemon } from '@/lib/pokeapi';
 
@@ -33,7 +34,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps) {
   const generation = getGeneration(Number((await params).gen));
-  return { title: generation ? `Generation ${generation.numeral} · Pokédex Data Visuals` : 'Pokédex Data Visuals' };
+  return { title: generation ? `Region ${generation.numeral} · Dex Data Visuals` : 'Dex Data Visuals' };
 }
 
 export default async function GenerationPage({ params }: PageProps) {
@@ -43,28 +44,50 @@ export default async function GenerationPage({ params }: PageProps) {
   // The header needs no API data, so it renders immediately. Only the
   // dashboard waits on the PokeAPI, so only it sits behind <Suspense>.
   return (
-    <main className="page">
-      <header className="page__header">
-        <p className="page__eyebrow">
-          PokeAPI · Generation {generation.numeral} · {generation.region}
-        </p>
-        <h1 className="page__title">Pokédex Data Visuals</h1>
-        <p className="page__intro">
-          Five ways to look at the same {generationSize(generation)} Pokémon. Each chart was picked for the question it
-          answers. Pick a generation, highlight a type, hover for details, or switch any card to its table view.
-        </p>
+    <div className="page">
+      <header className="dex-header">
+        <div className="dex-header__inner">
+          <div className="dex-header__top">
+            {/* The handheld's lens and status lights - pure decoration */}
+            <div className="dex-header__lights" aria-hidden="true">
+              <span className="dex-header__lens" />
+              <span className="dex-header__light dex-header__light--yellow" />
+              <span className="dex-header__light dex-header__light--green" />
+              <span className="dex-header__light dex-header__light--red" />
+            </div>
+            <p className="dex-header__breadcrumb">
+              PokeAPI · Generation {generation.numeral} · {generation.region}
+            </p>
+          </div>
+          <div className="dex-header__main">
+            <div className="dex-header__intro">
+              <h1 className="dex-header__title">Dex Data Visuals</h1>
+              <p className="dex-header__lede">
+                Five readouts on the {generationSize(generation)} creatures of Region {generation.numeral}. Pick a
+                region, light up a type, then tap any entry to scan it.
+              </p>
+            </div>
+            <RegionPicker current={generation} />
+          </div>
+        </div>
       </header>
-      {STREAM_DASHBOARD ? (
-        <Suspense fallback={<LoadingPanel count={generationSize(generation)} region={generation.region} />}>
+
+      <main className="page__main">
+        {STREAM_DASHBOARD ? (
+          <Suspense fallback={<LoadingPanel count={generationSize(generation)} region={generation.region} />}>
+            <GenerationDashboard generation={generation} />
+          </Suspense>
+        ) : (
           <GenerationDashboard generation={generation} />
-        </Suspense>
-      ) : (
-        <GenerationDashboard generation={generation} />
-      )}
-      <footer className="page__footer">
-        Data from <a href="https://pokeapi.co">pokeapi.co</a>
-      </footer>
-    </main>
+        )}
+        <footer className="page__footer">
+          <span>
+            Data from <a href="https://pokeapi.co">pokeapi.co</a>
+          </span>
+          <span>Unofficial fan-made data project. Not affiliated with any game publisher.</span>
+        </footer>
+      </main>
+    </div>
   );
 }
 

@@ -39,5 +39,6 @@ export interface Pokemon {
   stats: Record<StatKey, number>;
   /** Base stat total (sum of the six stats). */
   total: number;
+  /** Animated GIF when one exists, otherwise a still sprite. */
   sprite: string | null;
 }

@@ -1,41 +1,61 @@
+@use '../abstracts/tokens' as *;
 @use '../abstracts/mixins' as *;
 
-// Block: page - the outer layout shell.
+// Block: page - the outer shell around the header and the dashboard.
 .page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: space(6) space(4) space(7);
+  min-height: 100vh;
 
-  &__header {
-    max-width: 680px;
-    margin-bottom: space(5);
+  &__main {
+    display: flex;
+    flex-direction: column;
+    gap: space(7);
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: space(7) space(6) space(8);
+
+    @media (max-width: 600px) {
+      padding: space(5) space(4) space(8);
+    }
   }
 
-  &__eyebrow {
-    @include eyebrow;
-    margin-bottom: space(2);
-  }
-
-  &__title {
-    font-size: clamp(1.75rem, 4vw, 2.5rem);
-    font-weight: 700;
-    line-height: 1.15;
-    letter-spacing: -0.02em;
-  }
-
-  &__intro {
-    margin-top: space(3);
-    color: var(--text-secondary);
-  }
-
-  &__status {
-    padding: space(7) 0;
-    color: var(--text-secondary);
+  // While another region loads, keep the current readouts on screen but
+  // dimmed - no blank flash. Pure CSS: :has() reacts to the spinner the
+  // region picker renders inside the pending link.
+  &:has(.region-picker__pending) .dashboard {
+    opacity: 0.45;
+    pointer-events: none;
   }
 
   &__footer {
-    margin-top: space(6);
-    font-size: 0.8125rem;
-    color: var(--text-muted);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: space(4);
+    padding-top: space(2);
+    font-size: 14px;
+    color: var(--text-soft);
+  }
+
+  &__error {
+    @include hard-card(16px);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: space(3);
+    padding: space(6);
+  }
+
+  &__error-title {
+    @include pixel(26px, 700);
+  }
+
+  &__retry {
+    @include button-reset;
+    @include pressable;
+    @include pixel(16px);
+    @include focus-ring;
+    padding: space(2) space(4);
+    border: $border solid var(--ink);
+    border-radius: 999px;
   }
 }

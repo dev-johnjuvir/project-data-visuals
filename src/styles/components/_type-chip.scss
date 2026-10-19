@@ -1,0 +1,23 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// Block: type-chip - a pill button that presses in when active.
+.type-chip {
+  @include button-reset;
+  @include pressable;
+  @include pixel(16px);
+  @include focus-ring;
+  display: inline-flex;
+  align-items: center;
+  gap: space(2);
+  min-height: 44px; // comfortable touch target
+  padding: 6px 14px 6px 10px;
+  border: $border solid var(--ink);
+  border-radius: 999px;
+  color: var(--ink);
+
+  &--active,
+  &--active:hover {
+    @include pressed;
+  }
+}
