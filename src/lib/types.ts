@@ -48,3 +48,39 @@ export interface Pokemon {
   /** In hectograms, as the API sends it (69 = 6.9 kg). */
   weight: number;
 }
+
+// --- Abilities and moves -------------------------------------------------
+// Too heavy to ship for a whole region, so the Field Dex loads these per
+// entry from /api/dex/[id] when the INFO or SKILLS tab opens.
+
+export interface Ability {
+  name: string;
+  hidden: boolean;
+  /** One-line English effect text. */
+  effect: string;
+  /** Species in the National Dex with this ability, this one included. */
+  holders: number;
+}
+
+export type MoveCategory = 'physical' | 'special' | 'status';
+
+export interface Move {
+  name: string;
+  /** Level learned; 0 means "on evolution". */
+  level: number;
+  type: string;
+  category: MoveCategory;
+  power: number | null;
+  accuracy: number | null;
+}
+
+export interface PokemonDetails {
+  id: number;
+  abilities: Ability[];
+  /** The rarest ability (fewest holders) - this Pokémon's calling card. */
+  signature: string;
+  /** Level-up learnset from `versionGroup`, by level then name. */
+  moves: Move[];
+  /** e.g. "scarlet-violet": the newest game with a level-up learnset. */
+  versionGroup: string;
+}

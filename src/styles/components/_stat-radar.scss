@@ -29,6 +29,13 @@
     stroke-width: 3;
     stroke-linejoin: round;
     transition: all 250ms ease;
+
+    // VS tab: the selected entry sits underneath, the rival on top -
+    // see-through and dashed, so both outlines stay readable.
+    &--rival {
+      fill-opacity: 0.4;
+      stroke-dasharray: 7 5;
+    }
   }
 
   &__label {

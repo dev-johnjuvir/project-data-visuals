@@ -68,7 +68,7 @@ class PermanentError extends Error {}
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Fetch one Pokémon, retrying transient failures.
+ * GET one PokeAPI resource, retrying transient failures.
  *
  * The build makes 1,025 requests to a free public API. A dropped connection
  * (ECONNRESET), a timeout, a 429 rate limit or a 5xx will happen eventually,
@@ -76,28 +76,39 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
  * exponential backoff (0.5s, 1s, 2s) plus random jitter, so parallel
  * requests that failed together don't all retry at the same instant.
  */
-async function fetchPokemon(id: number): Promise<Pokemon> {
+export async function fetchApi<T>(path: string): Promise<T> {
   for (let attempt = 1; ; attempt++) {
     try {
-      const res = await fetch(`${API_BASE}/pokemon/${id}`, {
+      const res = await fetch(`${API_BASE}/${path}`, {
         next: { revalidate: ONE_DAY },
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
       if (!res.ok) {
-        const message = `PokeAPI returned ${res.status} for Pokémon #${id}`;
+        const message = `PokeAPI returned ${res.status} for ${path}`;
         const retryable = res.status === 429 || res.status >= 500;
         throw retryable ? new Error(message) : new PermanentError(message);
       }
       // Inside the try: the connection can also drop while the body streams in.
-      return toPokemon(await res.json());
+      return (await res.json()) as T;
     } catch (error) {
       if (error instanceof PermanentError || attempt >= MAX_ATTEMPTS) throw error;
       const delay = 500 * 2 ** (attempt - 1) + Math.random() * 250;
-      console.warn(`PokeAPI #${id} failed (attempt ${attempt}/${MAX_ATTEMPTS}), retrying in ${Math.round(delay)}ms`);
+      console.warn(`PokeAPI ${path} failed (attempt ${attempt}/${MAX_ATTEMPTS}), retrying in ${Math.round(delay)}ms`);
       await sleep(delay);
     }
   }
 }
+
+/** Run `task` over `items`, at most BATCH_SIZE requests in flight at once. */
+export async function inBatches<T, R>(items: T[], task: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = [];
+  for (let i = 0; i < items.length; i += BATCH_SIZE) {
+    results.push(...(await Promise.all(items.slice(i, i + BATCH_SIZE).map(task))));
+  }
+  return results;
+}
+
+const fetchPokemon = async (id: number) => toPokemon(await fetchApi<ApiPokemon>(`pokemon/${id}`));
 
 // Keep the slimmed result in memory so dev reloads don't refetch every record.
 const memo = new Map<number, Promise<Pokemon[]>>();
@@ -109,11 +120,7 @@ export function getPokemon(generation: Generation): Promise<Pokemon[]> {
 
   const load = (async () => {
     const ids = Array.from({ length: generationSize(generation) }, (_, i) => generation.first + i);
-    const results: Pokemon[] = [];
-    for (let i = 0; i < ids.length; i += BATCH_SIZE) {
-      results.push(...(await Promise.all(ids.slice(i, i + BATCH_SIZE).map(fetchPokemon))));
-    }
-    return results;
+    return inBatches(ids, fetchPokemon);
   })();
 
   memo.set(generation.id, load);

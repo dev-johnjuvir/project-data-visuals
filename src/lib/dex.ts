@@ -72,5 +72,41 @@ export function statExtremes(p: Pokemon): { best: StatExtreme; worst: StatExtrem
   return { best: describe(pick((a, b) => a > b)), worst: describe(pick((a, b) => a < b)) };
 }
 
-export const formatHeight = (dm: number) => `${(dm / 10).toFixed(1)} m`;
+export type Side = 'left' | 'right' | 'tie';
+
+export interface StatMatchup {
+  key: StatKey;
+  left: number;
+  right: number;
+  winner: Side;
+}
+
+export interface Matchup {
+  rows: StatMatchup[];
+  total: { left: number; right: number; winner: Side };
+  /** How many of the six stats each side wins outright. */
+  wins: { left: number; right: number };
+}
+
+const winner = (left: number, right: number): Side => (left > right ? 'left' : right > left ? 'right' : 'tie');
+
+/** Head-to-head of two entries, stat by stat - the VS tab's data. */
+export function compareStats(left: Pokemon, right: Pokemon): Matchup {
+  const rows = STAT_KEYS.map((key) => ({
+    key,
+    left: left.stats[key],
+    right: right.stats[key],
+    winner: winner(left.stats[key], right.stats[key]),
+  }));
+  return {
+    rows,
+    total: { left: left.total, right: right.total, winner: winner(left.total, right.total) },
+    wins: {
+      left: rows.filter((r) => r.winner === 'left').length,
+      right: rows.filter((r) => r.winner === 'right').length,
+    },
+  };
+}
+
+export const formatHeight =(dm: number) => `${(dm / 10).toFixed(1)} m`;
 export const formatWeight = (hg: number) => `${(hg / 10).toFixed(1)} kg`;

@@ -21,6 +21,12 @@ export function FieldDex({ generation, pokemon }: FieldDexProps) {
   const [selectedId, setSelectedId] = useState(() =>
     pokemon.some((p) => p.id === PIKACHU_ID) ? PIKACHU_ID : pokemon[0].id,
   );
+  // The VS tab's opponent starts as the next entry (Pikachu vs Raichu) and
+  // stays put while you browse, so one rival can face the whole region.
+  const [rivalId, setRivalId] = useState(() => {
+    const at = pokemon.findIndex((p) => p.id === selectedId);
+    return pokemon[(at + 1) % pokemon.length].id;
+  });
   const [tab, setTab] = useState<Tab>('stats');
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
@@ -30,12 +36,17 @@ export function FieldDex({ generation, pokemon }: FieldDexProps) {
 
   const index = Math.max(0, pokemon.findIndex((p) => p.id === selectedId));
   const selected = pokemon[index];
+  const rival = pokemon.find((p) => p.id === rivalId) ?? selected;
   const first = pokemon[0];
   const last = pokemon[pokemon.length - 1];
 
   // Browsing wraps around the region; tabs wrap too.
   const browse = (by: number) => setSelectedId(pokemon[(index + by + pokemon.length) % pokemon.length].id);
   const switchTab = (by: number) => setTab(TABS[(TABS.indexOf(tab) + by + TABS.length) % TABS.length]);
+  const swap = () => {
+    setSelectedId(rival.id);
+    setRivalId(selected.id);
+  };
   const random = () => {
     // Never "randomly" land on the entry already showing.
     const offset = 1 + Math.floor(Math.random() * (pokemon.length - 1));
@@ -94,10 +105,13 @@ export function FieldDex({ generation, pokemon }: FieldDexProps) {
           generation={generation}
           pokemon={pokemon}
           selected={selected}
+          rival={rival}
           position={index + 1}
           tab={tab}
           onTab={setTab}
           onSelect={setSelectedId}
+          onRival={setRivalId}
+          onSwap={swap}
         />
       </div>
 

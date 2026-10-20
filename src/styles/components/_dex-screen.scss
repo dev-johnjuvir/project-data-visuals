@@ -115,17 +115,22 @@
 
   // --- Tabs ---------------------------------------------------------------
 
+  // Five tabs: rows of three on phones, one row once there's room.
   &__tabs {
     flex-shrink: 0;
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 6px;
+
+    @include from($breakpoint-dex-mid) {
+      grid-template-columns: repeat(5, 1fr);
+    }
   }
 
   &__tab {
     @include button-reset;
     @include label(10px);
     @include focus-ring;
-    flex: 1;
     min-height: 44px;
     border: $border solid var(--ink);
     border-radius: 10px;
@@ -340,6 +345,316 @@
 
   &__near-total {
     font-weight: 700;
+  }
+
+  // --- VS tab -------------------------------------------------------------
+
+  &__vs {
+    display: flex;
+    flex-direction: column;
+    gap: space(3);
+  }
+
+  &__vs-picker {
+    display: flex;
+    align-items: flex-end;
+    gap: space(2);
+  }
+
+  &__vs-field {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: space(1);
+    min-width: 0;
+  }
+
+  &__vs-select {
+    @include pixel(16px);
+    @include focus-ring;
+    min-height: 40px;
+    padding: 0 space(2);
+    border: 2px solid var(--ink);
+    border-radius: 8px;
+    background: var(--lcd-card);
+    color: var(--ink);
+  }
+
+  &__vs-swap {
+    @include button-reset;
+    @include label(9px);
+    @include focus-ring;
+    min-height: 40px;
+    padding: 0 space(3);
+    border: 2px solid var(--ink);
+    border-radius: 8px;
+    background: var(--ink);
+    color: var(--lcd);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--bezel-raised);
+    }
+  }
+
+  &__vs-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: space(2) space(4);
+    margin-top: -(space(2));
+    font-family: $font-pixel;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  &__vs-key {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  // Mirrors the radar: solid outline = selected, dashed = rival.
+  &__vs-swatch {
+    width: 16px;
+    height: 12px;
+    border: 2px solid var(--ink);
+    border-radius: 3px;
+    background: var(--type-color);
+
+    &--rival {
+      border-style: dashed;
+    }
+  }
+
+  // value | bar <- | label | -> bar | value
+  &__vs-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  &__vs-row {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) 36px minmax(0, 1fr) 34px;
+    align-items: center;
+    gap: 6px;
+
+    &--total {
+      grid-template-columns: 34px 1fr 34px;
+      padding-top: space(2);
+      border-top: 2px dashed var(--lcd-rule);
+    }
+  }
+
+  &__vs-label,
+  &__vs-total-label {
+    @include pixel(15px);
+    text-align: center;
+  }
+
+  &__vs-track {
+    display: flex;
+    height: 14px;
+    overflow: hidden;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: var(--lcd-card);
+
+    // The selected entry's bar grows leftward, out from the label.
+    &--left {
+      justify-content: flex-end;
+    }
+  }
+
+  &__vs-fill {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    transition:
+      width 250ms ease,
+      opacity 250ms ease;
+
+    &--left {
+      background: var(--type-color);
+    }
+
+    &--right {
+      background: var(--rival-color);
+    }
+
+    &--lost {
+      opacity: 0.4;
+    }
+  }
+
+  &__vs-value {
+    @include pixel(16px, 400);
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+
+    &--won {
+      font-weight: 700;
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 3px;
+    }
+  }
+
+  &__vs-row--total &__vs-value {
+    font-size: 22px;
+  }
+
+  &__vs-verdict {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  // --- Abilities (INFO tab) and SKILLS, loaded on demand ----------------
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  &__message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: space(3);
+    min-height: 160px;
+    margin: 0;
+    font-family: $font-pixel;
+    font-size: 16px;
+    text-align: center;
+  }
+
+  &__retry {
+    @include button-reset;
+    @include label(9px);
+    @include focus-ring;
+    min-height: 40px;
+    padding: 0 space(4);
+    border: 2px solid var(--ink);
+    border-radius: 8px;
+    background: var(--ink);
+    color: var(--lcd);
+    cursor: pointer;
+  }
+
+  &__fineprint {
+    margin: 0;
+    font-family: $font-pixel;
+    font-size: 14px;
+    color: var(--text-soft);
+  }
+
+  &__abilities {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  &__card--signature {
+    border-width: $border;
+    background: var(--paper);
+  }
+
+  &__ability-name {
+    @include pixel(26px, 700);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.1;
+
+    &--small {
+      font-size: 19px;
+    }
+  }
+
+  &__tag {
+    @include label(8px);
+    padding: 2px 6px;
+    border: 2px solid var(--ink);
+    border-radius: 6px;
+    background: var(--lcd-card);
+
+    &--strong {
+      background: var(--yellow);
+    }
+  }
+
+  &__ability-effect {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  &__ability-holders {
+    font-family: $font-pixel;
+    font-size: 14px;
+    color: var(--text-soft);
+  }
+
+  &__skills {
+    display: flex;
+    flex-direction: column;
+    gap: space(2);
+  }
+
+  &__moves {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: $font-pixel;
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+
+    th,
+    td {
+      padding: 6px space(1);
+      border-bottom: 2px dashed var(--lcd-rule);
+      text-align: right;
+      vertical-align: middle;
+    }
+
+    thead th {
+      @include label(8px);
+      border-bottom: 2px solid var(--ink);
+      color: var(--text-soft);
+    }
+
+    // Lv and Move read left to right; the numbers line up on the right.
+    th:nth-child(-n + 2),
+    td:nth-child(-n + 2) {
+      text-align: left;
+    }
+  }
+
+  &__move-level {
+    width: 36px;
+    font-weight: 700;
+  }
+
+  &__move {
+    font-weight: 400;
+  }
+
+  &__move-name {
+    display: block;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  &__move-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: var(--text-soft);
   }
 
   // --- Footer -------------------------------------------------------------

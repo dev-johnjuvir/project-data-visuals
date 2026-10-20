@@ -1,14 +1,17 @@
-import { useMemo } from 'react';
-import { formatHeight, formatWeight, rankEntry, statExtremes } from '@/lib/dex';
+import { useMemo, type CSSProperties, type ReactNode } from 'react';
+import { compareStats, formatHeight, formatWeight, rankEntry, statExtremes, type Side } from '@/lib/dex';
 import type { Generation } from '@/lib/generations';
 import { capitalize, formatDexNumber, formatName, formatPercent } from '@/lib/transforms';
 import { pct, typeStyle } from '@/lib/style';
-import { STAT_KEYS, STAT_LABELS, type Pokemon } from '@/lib/types';
+import { STAT_KEYS, STAT_LABELS, STAT_SHORT_LABELS, type MoveCategory, type Pokemon, type PokemonDetails } from '@/lib/types';
 import { CryButton } from '@/components/ui/CryButton';
 import { SpriteScreen } from '@/components/ui/SpriteScreen';
+import { Spinner } from '@/components/ui/Spinner';
+import { TypeDot } from '@/components/ui/TypeDot';
+import { usePokemonDetails } from '@/hooks/usePokemonDetails';
 import { StatRadar } from './StatRadar';
 
-export const TABS = ['stats', 'info', 'rank'] as const;
+export const TABS = ['stats', 'info', 'skills', 'rank', 'vs'] as const;
 export type Tab = (typeof TABS)[number];
 
 const MAX_STAT = 255;
@@ -22,14 +25,18 @@ interface DexScreenProps {
   generation: Generation;
   pokemon: Pokemon[];
   selected: Pokemon;
+  /** The entry the VS tab pits against the selected one. */
+  rival: Pokemon;
   position: number;
   tab: Tab;
   onTab: (tab: Tab) => void;
   onSelect: (id: number) => void;
+  onRival: (id: number) => void;
+  onSwap: () => void;
 }
 
-/** The device's LCD: the scanned entry, with STATS / INFO / RANK tabs. */
-export function DexScreen({ generation, pokemon, selected, position, tab, onTab, onSelect }: DexScreenProps) {
+/** The device's LCD: the scanned entry, with STATS / INFO / SKILLS / RANK / VS tabs. */
+export function DexScreen({ generation, pokemon, selected, rival, position, tab, onTab, onSelect, onRival, onSwap }: DexScreenProps) {
   return (
     <section className="dex-screen" aria-label="Entry screen">
       <div className="dex-screen__status" aria-hidden="true">
@@ -83,7 +90,9 @@ export function DexScreen({ generation, pokemon, selected, position, tab, onTab,
         >
           {tab === 'stats' && <StatsTab selected={selected} />}
           {tab === 'info' && <InfoTab selected={selected} />}
+          {tab === 'skills' && <DetailsTab selected={selected} render={(details) => <SkillsTab details={details} />} />}
           {tab === 'rank' && <RankTab generation={generation} pokemon={pokemon} selected={selected} onSelect={onSelect} />}
+          {tab === 'vs' && <VsTab pokemon={pokemon} selected={selected} rival={rival} onRival={onRival} onSwap={onSwap} />}
         </div>
 
         <div className="dex-screen__footer">
@@ -139,15 +148,129 @@ function InfoTab({ selected }: { selected: Pokemon }) {
     { label: 'Base total', value: String(selected.total) },
   ];
 
+  // The facts come with the region data and show at once; abilities are
+  // fetched per entry, so they load in underneath.
   return (
-    <dl className="dex-screen__facts">
-      {facts.map((fact) => (
-        <div key={fact.label} className="dex-screen__card">
-          <dt className="dex-screen__card-label">{fact.label}</dt>
-          <dd className="dex-screen__card-value">{fact.value}</dd>
-        </div>
-      ))}
-    </dl>
+    <div className="dex-screen__info">
+      <dl className="dex-screen__facts">
+        {facts.map((fact) => (
+          <div key={fact.label} className="dex-screen__card">
+            <dt className="dex-screen__card-label">{fact.label}</dt>
+            <dd className="dex-screen__card-value">{fact.value}</dd>
+          </div>
+        ))}
+      </dl>
+      <DetailsTab selected={selected} render={(details) => <Abilities details={details} />} />
+    </div>
+  );
+}
+
+/** Loading / error / ready wrapper for the parts fed by /api/dex/[id]. */
+function DetailsTab({ selected, render }: { selected: Pokemon; render: (details: PokemonDetails) => ReactNode }) {
+  const state = usePokemonDetails(selected.id);
+  if (state.status === 'loading') {
+    return (
+      <div className="dex-screen__message">
+        <Spinner size="small" label={`Loading ${formatName(selected.name)}'s data`} />
+        <span aria-hidden="true">Scanning...</span>
+      </div>
+    );
+  }
+  if (state.status === 'error') {
+    return (
+      <div className="dex-screen__message">
+        <span>Couldn&apos;t reach the Pokédex database.</span>
+        <button type="button" className="dex-screen__retry" onClick={state.retry}>
+          Retry
+        </button>
+      </div>
+    );
+  }
+  return render(state.details);
+}
+
+/** "scarlet-violet" -> "Scarlet / Violet" */
+const formatGame = (group: string) => group.split('-').map(capitalize).join(' / ');
+
+const holdersText = (holders: number) =>
+  holders <= 1 ? 'Exclusive: no other species has it' : `Shared with ${holders - 1} other species`;
+
+function Abilities({ details }: { details: PokemonDetails }) {
+  const signature = details.abilities.find((a) => a.name === details.signature)!;
+  const others = details.abilities.filter((a) => a !== signature);
+
+  return (
+    <div className="dex-screen__abilities">
+      <div className="dex-screen__card dex-screen__card--signature">
+        <span className="dex-screen__card-label">Signature ability</span>
+        <span className="dex-screen__ability-name">
+          {formatName(signature.name)}
+          {signature.hidden && <span className="dex-screen__tag">Hidden</span>}
+          {signature.holders <= 1 && <span className="dex-screen__tag dex-screen__tag--strong">Exclusive</span>}
+        </span>
+        <p className="dex-screen__ability-effect">{signature.effect}</p>
+        <span className="dex-screen__ability-holders">{holdersText(signature.holders)}</span>
+      </div>
+
+      {others.length > 0 && (
+        <>
+          <span className="dex-screen__card-label">Also possible</span>
+          {others.map((ability) => (
+            <div key={ability.name} className="dex-screen__card">
+              <span className="dex-screen__ability-name dex-screen__ability-name--small">
+                {formatName(ability.name)}
+                {ability.hidden && <span className="dex-screen__tag">Hidden</span>}
+              </span>
+              <p className="dex-screen__ability-effect">{ability.effect}</p>
+              <span className="dex-screen__ability-holders">{holdersText(ability.holders)}</span>
+            </div>
+          ))}
+        </>
+      )}
+      <p className="dex-screen__fineprint">Signature = the rarest ability this species can have.</p>
+    </div>
+  );
+}
+
+const CATEGORY_LABELS: Record<MoveCategory, string> = { physical: 'Phys', special: 'Spec', status: 'Status' };
+
+function SkillsTab({ details }: { details: PokemonDetails }) {
+  if (details.moves.length === 0) {
+    return <p className="dex-screen__message">No level-up moves on record.</p>;
+  }
+
+  return (
+    <div className="dex-screen__skills">
+      <p className="dex-screen__fineprint">
+        {details.moves.length} level-up moves · {formatGame(details.versionGroup)}
+      </p>
+      <table className="dex-screen__moves">
+        <thead>
+          <tr>
+            <th scope="col">Lv</th>
+            <th scope="col">Move</th>
+            <th scope="col">Pow</th>
+            <th scope="col">Acc</th>
+          </tr>
+        </thead>
+        <tbody>
+          {details.moves.map((move) => (
+            <tr key={`${move.level}-${move.name}`}>
+              <td className="dex-screen__move-level">{move.level === 0 ? 'Evo' : move.level}</td>
+              <th scope="row" className="dex-screen__move">
+                <span className="dex-screen__move-name">{formatName(move.name)}</span>
+                <span className="dex-screen__move-meta">
+                  <TypeDot type={move.type} size="small" />
+                  {capitalize(move.type)} · {CATEGORY_LABELS[move.category]}
+                </span>
+              </th>
+              <td>{move.power ?? '-'}</td>
+              <td>{move.accuracy === null ? '-' : `${move.accuracy}%`}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -197,6 +320,95 @@ function RankTab({ generation, pokemon, selected, onSelect }: RankTabProps) {
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+
+interface VsTabProps {
+  pokemon: Pokemon[];
+  selected: Pokemon;
+  rival: Pokemon;
+  onRival: (id: number) => void;
+  onSwap: () => void;
+}
+
+// Lesson: a "butterfly" chart - two bar charts back to back on a shared
+// axis. Each bar grows outward from the stat label in the middle, both on
+// the same fixed 0-255 scale, so the longer side wins at a glance. The
+// losing bar is faded rather than hidden, so you still see by how much.
+function VsTab({ pokemon, selected, rival, onRival, onSwap }: VsTabProps) {
+  const matchup = useMemo(() => compareStats(selected, rival), [selected, rival]);
+  const names = { left: formatName(selected.name), right: formatName(rival.name) };
+  const verdict =
+    matchup.total.winner === 'tie'
+      ? `Dead even at ${matchup.total.left} total.`
+      : `${names[matchup.total.winner]} leads by ${Math.abs(matchup.total.left - matchup.total.right)} total.`;
+  const barClass = (side: 'left' | 'right', won: Side) =>
+    `dex-screen__vs-fill dex-screen__vs-fill--${side}${won !== side && won !== 'tie' ? ' dex-screen__vs-fill--lost' : ''}`;
+  const valueClass = (side: 'left' | 'right', won: Side) =>
+    `dex-screen__vs-value${won === side ? ' dex-screen__vs-value--won' : ''}`;
+
+  return (
+    <div className="dex-screen__vs">
+      <div className="dex-screen__vs-picker">
+        <label className="dex-screen__vs-field">
+          <span className="dex-screen__card-label">Rival</span>
+          <select className="dex-screen__vs-select" value={rival.id} onChange={(e) => onRival(Number(e.target.value))}>
+            {pokemon.map((p) => (
+              <option key={p.id} value={p.id}>
+                {formatDexNumber(p.id)} {formatName(p.name)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button type="button" className="dex-screen__vs-swap" onClick={onSwap} aria-label={`Swap: scan ${names.right} instead`}>
+          Swap
+        </button>
+      </div>
+
+      <div className="dex-screen__radar">
+        <StatRadar pokemon={selected} rival={rival} />
+      </div>
+      <div className="dex-screen__vs-legend">
+        <span className="dex-screen__vs-key" style={typeStyle(selected.primaryType)}>
+          <span className="dex-screen__vs-swatch" aria-hidden="true" />
+          {names.left}
+        </span>
+        <span className="dex-screen__vs-key" style={typeStyle(rival.primaryType)}>
+          <span className="dex-screen__vs-swatch dex-screen__vs-swatch--rival" aria-hidden="true" />
+          {names.right}
+        </span>
+      </div>
+
+      <div className="dex-screen__vs-bars" style={{ ...typeStyle(selected.primaryType), '--rival-color': `var(--type-${rival.primaryType})` } as CSSProperties}>
+        {matchup.rows.map((row) => (
+          <div
+            key={row.key}
+            className="dex-screen__vs-row"
+            role="img"
+            aria-label={`${STAT_LABELS[row.key]}: ${names.left} ${row.left}, ${names.right} ${row.right}`}
+          >
+            <span className={valueClass('left', row.winner)}>{row.left}</span>
+            <span className="dex-screen__vs-track dex-screen__vs-track--left">
+              <span className={barClass('left', row.winner)} style={{ width: pct(Math.max(0.04, row.left / MAX_STAT)) }} />
+            </span>
+            <span className="dex-screen__vs-label">{STAT_SHORT_LABELS[row.key]}</span>
+            <span className="dex-screen__vs-track">
+              <span className={barClass('right', row.winner)} style={{ width: pct(Math.max(0.04, row.right / MAX_STAT)) }} />
+            </span>
+            <span className={valueClass('right', row.winner)}>{row.right}</span>
+          </div>
+        ))}
+        <div className="dex-screen__vs-row dex-screen__vs-row--total">
+          <span className={valueClass('left', matchup.total.winner)}>{matchup.total.left}</span>
+          <span className="dex-screen__vs-total-label">Total</span>
+          <span className={valueClass('right', matchup.total.winner)}>{matchup.total.right}</span>
+        </div>
+      </div>
+
+      <p className="dex-screen__vs-verdict">
+        {verdict} Stats won: {names.left} {matchup.wins.left}, {names.right} {matchup.wins.right}.
+      </p>
     </div>
   );
 }
