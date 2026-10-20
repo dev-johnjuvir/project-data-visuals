@@ -2,6 +2,7 @@ import { useMemo, type CSSProperties, type ReactNode } from 'react';
 import { compareStats, formatHeight, formatWeight, rankEntry, statExtremes, type Side } from '@/lib/dex';
 import type { Generation } from '@/lib/generations';
 import { capitalize, formatDexNumber, formatName, formatPercent } from '@/lib/transforms';
+import { scrollSfxProps } from '@/lib/sfx';
 import { pct, typeStyle } from '@/lib/style';
 import { STAT_KEYS, STAT_LABELS, STAT_SHORT_LABELS, type MoveCategory, type Pokemon, type PokemonDetails } from '@/lib/types';
 import { CryButton } from '@/components/ui/CryButton';
@@ -37,6 +38,7 @@ interface DexScreenProps {
 
 /** The device's LCD: the scanned entry, with STATS / INFO / SKILLS / RANK / VS tabs. */
 export function DexScreen({ generation, pokemon, selected, rival, position, tab, onTab, onSelect, onRival, onSwap }: DexScreenProps) {
+  const scrollSfx = useMemo(scrollSfxProps, []);
   return (
     <section className="dex-screen" aria-label="Entry screen">
       <div className="dex-screen__status" aria-hidden="true">
@@ -84,6 +86,7 @@ export function DexScreen({ generation, pokemon, selected, rival, position, tab,
         <div
           key={`${tab}-${selected.id}`}
           className="dex-screen__body"
+          {...scrollSfx}
           tabIndex={0}
           role="region"
           aria-label={`${tab} for ${formatName(selected.name)}`}

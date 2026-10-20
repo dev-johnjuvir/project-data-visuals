@@ -133,6 +133,41 @@ $tablet: $breakpoint-dex-wide;
     }
   }
 
+  // Mute toggle: the same dark pill as the Charts link, icon only.
+  &__sound {
+    @include button-reset;
+    @include focus-ring;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: $border solid var(--ink);
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--paper);
+    cursor: pointer;
+
+    &:hover {
+      color: #ffe9a8;
+    }
+
+    &[aria-pressed='false'] {
+      color: var(--bezel-label);
+    }
+  }
+
+  &__sound-speaker {
+    fill: currentColor;
+  }
+
+  &__sound-wave {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
   &__charts-link {
     @include pixel(15px);
     @include focus-ring;

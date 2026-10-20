@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useMemo, useState, type KeyboardEvent } from 'react';
 import { filterEntries, typesInUse } from '@/lib/dex';
 import type { Generation } from '@/lib/generations';
+import { playSfx, setMuted, useMuted } from '@/lib/sfx';
 import { formatDexNumber } from '@/lib/transforms';
 import type { Pokemon } from '@/lib/types';
 import { DexScreen, TABS, type Tab } from './DexScreen';
@@ -42,17 +43,51 @@ export function FieldDex({ generation, pokemon }: FieldDexProps) {
   const first = pokemon[0];
   const last = pokemon[pokemon.length - 1];
 
+  const muted = useMuted();
+
+  // Every control goes through these, so each makes its sound in one place:
+  // "scroll" moves the cursor, "button" presses a control, "select" picks
+  // an entry.
+  const select = (id: number) => {
+    playSfx('select');
+    setSelectedId(id);
+  };
+  const jump = (id: number) => {
+    playSfx('button');
+    setSelectedId(id);
+  };
+  const changeTab = (next: Tab) => {
+    playSfx('button');
+    setTab(next);
+  };
+  const changeType = (type: string | null) => {
+    playSfx('button');
+    setTypeFilter(type);
+  };
+  const changeRival = (id: number) => {
+    playSfx('select');
+    setRivalId(id);
+  };
+
   // Browsing wraps around the region; tabs wrap too.
-  const browse = (by: number) => setSelectedId(pokemon[(index + by + pokemon.length) % pokemon.length].id);
-  const switchTab = (by: number) => setTab(TABS[(TABS.indexOf(tab) + by + TABS.length) % TABS.length]);
+  const browse = (by: number) => {
+    playSfx('scroll');
+    setSelectedId(pokemon[(index + by + pokemon.length) % pokemon.length].id);
+  };
+  const switchTab = (by: number) => changeTab(TABS[(TABS.indexOf(tab) + by + TABS.length) % TABS.length]);
   const swap = () => {
+    playSfx('button');
     setSelectedId(rival.id);
     setRivalId(selected.id);
   };
   const random = () => {
     // Never "randomly" land on the entry already showing.
     const offset = 1 + Math.floor(Math.random() * (pokemon.length - 1));
-    browse(offset);
+    select(pokemon[(index + offset) % pokemon.length].id);
+  };
+  const toggleSound = () => {
+    setMuted(!muted);
+    if (muted) playSfx('select'); // confirm sound is back (muted is the old value)
   };
 
   // Arrow keys drive the pad while focus is anywhere inside the device -
@@ -96,6 +131,23 @@ export function FieldDex({ generation, pokemon }: FieldDexProps) {
             <span className="field-dex__led field-dex__led--yellow" />
             <span className="field-dex__led field-dex__led--white" />
           </div>
+          <button
+            type="button"
+            className="field-dex__sound"
+            aria-pressed={!muted}
+            aria-label="Sound effects"
+            title={muted ? 'Sound off' : 'Sound on'}
+            onClick={toggleSound}
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+              <path className="field-dex__sound-speaker" d="M3 8 H6 L10 4 V16 L6 12 H3 Z" />
+              {muted ? (
+                <path className="field-dex__sound-wave" d="M13 7 L18 13 M18 7 L13 13" />
+              ) : (
+                <path className="field-dex__sound-wave" d="M13 7 Q15 10 13 13 M15.5 5 Q19 10 15.5 15" />
+              )}
+            </svg>
+          </button>
           <Link href={`/generation/${generation.id}`} className="field-dex__charts-link">
             Charts
           </Link>
@@ -110,9 +162,9 @@ export function FieldDex({ generation, pokemon }: FieldDexProps) {
           rival={rival}
           position={index + 1}
           tab={tab}
-          onTab={setTab}
-          onSelect={setSelectedId}
-          onRival={setRivalId}
+          onTab={changeTab}
+          onSelect={select}
+          onRival={changeRival}
           onSwap={swap}
         />
       </div>
@@ -165,10 +217,10 @@ export function FieldDex({ generation, pokemon }: FieldDexProps) {
           </div>
         </div>
         <div className="field-dex__jumps">
-          <button type="button" className="field-dex__jump" aria-label="First entry" onClick={() => setSelectedId(first.id)}>
+          <button type="button" className="field-dex__jump" aria-label="First entry" onClick={() => jump(first.id)}>
             {formatDexNumber(first.species)}
           </button>
-          <button type="button" className="field-dex__jump" aria-label="Last entry" onClick={() => setSelectedId(last.id)}>
+          <button type="button" className="field-dex__jump" aria-label="Last entry" onClick={() => jump(last.id)}>
             {formatDexNumber(last.species)}
           </button>
         </div>
@@ -182,8 +234,8 @@ export function FieldDex({ generation, pokemon }: FieldDexProps) {
           type={typeFilter}
           selectedId={selected.id}
           onQuery={setQuery}
-          onType={setTypeFilter}
-          onSelect={setSelectedId}
+          onType={changeType}
+          onSelect={select}
         />
       </div>
     </div>

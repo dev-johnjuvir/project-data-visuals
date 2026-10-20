@@ -1,7 +1,8 @@
 'use client';
 
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { useScrollToSelected } from '@/hooks/useScrollToSelected';
+import { scrollSfxProps } from '@/lib/sfx';
 import { capitalize } from '@/lib/transforms';
 import type { Pokemon } from '@/lib/types';
 import { DexEntry } from '@/components/ui/DexEntry';
@@ -21,6 +22,7 @@ interface DexSearchListProps {
 export function DexSearchList({ entries, types, query, type, selectedId, onQuery, onType, onSelect }: DexSearchListProps) {
   const boxRef = useRef<HTMLDivElement>(null);
   useScrollToSelected(boxRef, selectedId);
+  const scrollSfx = useMemo(scrollSfxProps, []);
 
   return (
     <section className="dex-search" aria-label="Entry list">
@@ -60,7 +62,7 @@ export function DexSearchList({ entries, types, query, type, selectedId, onQuery
         <span>Tap to scan</span>
       </div>
 
-      <div ref={boxRef} className="dex-search__box">
+      <div ref={boxRef} className="dex-search__box" {...scrollSfx}>
         {entries.length === 0 && <p className="dex-search__empty">No entries match. Try another name or clear the type.</p>}
         <ul className="dex-search__entries">
           {entries.map((p) => (
