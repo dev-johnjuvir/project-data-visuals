@@ -5,10 +5,11 @@ import { LoadingPanel } from '@/components/LoadingPanel';
 import { FieldDex } from '@/components/dex/FieldDex';
 import { GENERATIONS, generationSize, getGeneration, type Generation } from '@/lib/generations';
 import { pageMetadata } from '@/lib/metadata';
-import { getPokemon } from '@/lib/pokeapi';
+import { getPokemonWithForms } from '@/lib/pokeapi';
 
 // Same data and caching as the charts pages: getPokemon() memoises per
 // region, so building /dex/1 after /generation/1 costs no extra requests.
+// The dex also lists alternate forms (megas etc.), loaded once for all regions.
 export const revalidate = 86400;
 
 export const dynamicParams = false;
@@ -48,7 +49,7 @@ export default async function DexPage({ params }: PageProps) {
 }
 
 async function RegionDex({ generation }: { generation: Generation }) {
-  const pokemon = await getPokemon(generation);
+  const pokemon = await getPokemonWithForms(generation);
   // key resets the device (selection, tab, search) when the region changes
   return <FieldDex key={generation.id} generation={generation} pokemon={pokemon} />;
 }

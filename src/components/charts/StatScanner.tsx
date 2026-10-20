@@ -40,7 +40,7 @@ export function StatScanner({ pokemon, averageTotal, regionLabel, onPrev, onNext
 
       <div className="scanner__info">
         <div className="scanner__identity">
-          <span className="scanner__number">{formatDexNumber(pokemon.id)}</span>
+          <span className="scanner__number">{formatDexNumber(pokemon.species)}</span>
           <span className="scanner__name">{formatName(pokemon.name)}</span>
         </div>
         <div className="scanner__types">

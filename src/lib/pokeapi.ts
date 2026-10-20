@@ -11,9 +11,10 @@ const MAX_ATTEMPTS = 4;
 const TIMEOUT_MS = 15_000;
 
 // Only the fields we read. The real response is much larger (moves, games...).
-interface ApiPokemon {
+export interface ApiPokemon {
   id: number;
   name: string;
+  species: { url: string };
   types: { slot: number; type: { name: string } }[];
   stats: { base_stat: number; stat: { name: string } }[];
   height: number;
@@ -40,7 +41,7 @@ function pickSprite(sprites: ApiPokemon['sprites']): string | null {
   );
 }
 
-function toPokemon(raw: ApiPokemon): Pokemon {
+export function toPokemon(raw: ApiPokemon): Pokemon {
   const types = [...raw.types].sort((a, b) => a.slot - b.slot).map((t) => t.type.name);
   const stats = Object.fromEntries(
     STAT_KEYS.map((key) => [key, raw.stats.find((s) => s.stat.name === key)?.base_stat ?? 0]),
@@ -48,6 +49,7 @@ function toPokemon(raw: ApiPokemon): Pokemon {
 
   return {
     id: raw.id,
+    species: Number(raw.species.url.split('/').filter(Boolean).pop()),
     name: raw.name,
     types,
     primaryType: types[0],
@@ -126,4 +128,50 @@ export function getPokemon(generation: Generation): Promise<Pokemon[]> {
   memo.set(generation.id, load);
   load.catch(() => memo.delete(generation.id)); // don't cache failures
   return load;
+}
+
+// --- Alternate forms (Field Dex only) -----------------------------------
+// Megas, regional forms, Zygarde's 10%... have their own /pokemon records
+// with ids above 10000. The charts pages leave them out so their averages
+// stay one-per-species; the Field Dex lists them after their species.
+
+let formsMemo: Promise<Pokemon[]> | null = null;
+
+/** Every alternate form in the API: one list call, then one call per form. */
+function getAllForms(): Promise<Pokemon[]> {
+  if (formsMemo) return formsMemo;
+  const load = (async () => {
+    const list = await fetchApi<{ results: { name: string; url: string }[] }>('pokemon?limit=2000');
+    const forms = list.results.filter((r) => Number(r.url.split('/').filter(Boolean).pop()) > 10000);
+    return inBatches(forms, (f) => fetchApi<ApiPokemon>(`pokemon/${f.name}`).then(toPokemon));
+  })();
+  formsMemo = load;
+  load.catch(() => (formsMemo = null));
+  return load;
+}
+
+/** Types + stats: two forms with the same key play identically. */
+const battleKey = (p: Pokemon) => `${p.types.join('/')}|${STAT_KEYS.map((k) => p.stats[k]).join(',')}`;
+
+/**
+ * A region's Pokémon plus the alternate forms that actually play
+ * differently - different stats or types. Cosmetic forms (Pikachu's caps)
+ * and Gigantamax (same base stats) are skipped, and where two forms are
+ * identical (Zygarde 10% with or without Power Construct) the
+ * shorter-named one is kept.
+ */
+export async function getPokemonWithForms(generation: Generation): Promise<Pokemon[]> {
+  const [base, allForms] = await Promise.all([getPokemon(generation), getAllForms()]);
+  const seen = new Set(base.map((p) => `${p.species}|${battleKey(p)}`));
+  const forms = allForms
+    .filter((f) => f.species >= generation.first && f.species <= generation.last)
+    .sort((a, b) => a.name.length - b.name.length || a.id - b.id)
+    .filter((f) => {
+      const key = `${f.species}|${battleKey(f)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  // Each species first, then its forms in API order (megas tend to group).
+  return [...base, ...forms].sort((a, b) => a.species - b.species || a.id - b.id);
 }

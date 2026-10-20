@@ -6,6 +6,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  height: 100%; // fills the grid row, like .dex-search beside it
   min-width: 0;
   padding: 14px 14px space(3);
   border: 4px solid var(--ink);
@@ -549,6 +550,120 @@
     margin: 0;
     font-family: $font-pixel;
     font-size: 14px;
+    color: var(--text-soft);
+  }
+
+  // Stages run left to right with an arrow between them. A split stage
+  // (Ninjask / Shedinja) stacks in its column; a big one (Eevee's eight)
+  // becomes a two-column grid so it doesn't tower over the rest.
+  &__evolution {
+    display: flex;
+    flex-direction: column;
+    gap: space(2);
+  }
+
+  &__stages {
+    display: flex;
+    // Top-aligned: centred, Eevee would sit level with the middle of its
+    // eight evolutions - far down the screen.
+    align-items: flex-start;
+    justify-content: center;
+    gap: 22px; // room for the arrow
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__stage {
+    position: relative;
+    display: flex;
+    flex: 0 1 104px;
+    flex-direction: column;
+    gap: space(2);
+    min-width: 0;
+
+    &--branch {
+      display: grid;
+      flex-basis: 216px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    & + &::before {
+      content: '▶';
+      position: absolute;
+      top: 34px; // level with the first row's sprites
+      left: -17px;
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+  }
+
+  &__evo {
+    @include button-reset;
+    @include focus-ring;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+    // Same height for every card, whether or not it has a "how" line (the
+    // base form doesn't) - room for a sprite, a name and two lines of it.
+    min-height: 120px;
+    padding: space(1) space(1) space(2);
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    background: var(--lcd-card);
+    color: var(--ink);
+    text-align: center;
+
+    // Only in-region members are buttons; the rest are plain cards.
+    @at-root button#{&} {
+      cursor: pointer;
+
+      &:hover {
+        background: var(--paper);
+      }
+    }
+
+    &--current {
+      border-width: $border;
+      background: var(--yellow);
+    }
+  }
+
+  &__forms {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: space(2);
+  }
+
+  &__form-types {
+    display: flex;
+    gap: 3px;
+    margin: 2px 0;
+  }
+
+  &__evo-sprite {
+    width: 56px;
+    max-width: 100%;
+    height: auto;
+    min-height: 56px; // keeps the card's shape while loading, or with no sprite
+    object-fit: contain;
+    image-rendering: pixelated;
+  }
+
+  &__evo-name {
+    // 13px fits ten letters ("Charmander") on one line; longer names
+    // ("Crabominable") may still break rather than overflow the card.
+    @include pixel(13px, 700);
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    line-height: 1.1;
+  }
+
+  &__evo-how {
+    font-family: $font-pixel;
+    font-size: 13px;
+    line-height: 1.15;
     color: var(--text-soft);
   }
 

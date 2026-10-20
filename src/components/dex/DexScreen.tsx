@@ -50,7 +50,7 @@ export function DexScreen({ generation, pokemon, selected, rival, position, tab,
         <div className="dex-screen__head">
           <SpriteScreen key={selected.id} src={selected.sprite} name={formatName(selected.name)} size="compact" />
           <div className="dex-screen__identity">
-            <span className="dex-screen__number">No. {formatDexNumber(selected.id).slice(1)}</span>
+            <span className="dex-screen__number">No. {formatDexNumber(selected.species).slice(1)}</span>
             <h1 className="dex-screen__name">{formatName(selected.name)}</h1>
             <div className="dex-screen__types">
               {selected.types.map((type) => (
@@ -89,7 +89,7 @@ export function DexScreen({ generation, pokemon, selected, rival, position, tab,
           aria-label={`${tab} for ${formatName(selected.name)}`}
         >
           {tab === 'stats' && <StatsTab selected={selected} />}
-          {tab === 'info' && <InfoTab selected={selected} />}
+          {tab === 'info' && <InfoTab pokemon={pokemon} selected={selected} onSelect={onSelect} />}
           {tab === 'skills' && <DetailsTab selected={selected} render={(details) => <SkillsTab details={details} />} />}
           {tab === 'rank' && <RankTab generation={generation} pokemon={pokemon} selected={selected} onSelect={onSelect} />}
           {tab === 'vs' && <VsTab pokemon={pokemon} selected={selected} rival={rival} onRival={onRival} onSwap={onSwap} />}
@@ -137,7 +137,13 @@ function StatsTab({ selected }: { selected: Pokemon }) {
   );
 }
 
-function InfoTab({ selected }: { selected: Pokemon }) {
+interface InfoTabProps {
+  pokemon: Pokemon[];
+  selected: Pokemon;
+  onSelect: (id: number) => void;
+}
+
+function InfoTab({ pokemon, selected, onSelect }: InfoTabProps) {
   const { best, worst } = statExtremes(selected);
   const facts = [
     { label: 'Height', value: formatHeight(selected.height) },
@@ -160,7 +166,16 @@ function InfoTab({ selected }: { selected: Pokemon }) {
           </div>
         ))}
       </dl>
-      <DetailsTab selected={selected} render={(details) => <Abilities details={details} />} />
+      <DetailsTab
+        selected={selected}
+        render={(details) => (
+          <>
+            <EvolutionLine details={details} pokemon={pokemon} selected={selected} onSelect={onSelect} />
+            <FormList details={details} pokemon={pokemon} selected={selected} onSelect={onSelect} />
+            <Abilities details={details} />
+          </>
+        )}
+      />
     </div>
   );
 }
@@ -187,6 +202,112 @@ function DetailsTab({ selected, render }: { selected: Pokemon; render: (details:
     );
   }
   return render(state.details);
+}
+
+interface EvolutionLineProps {
+  details: PokemonDetails;
+  pokemon: Pokemon[];
+  selected: Pokemon;
+  onSelect: (id: number) => void;
+}
+
+/** The line left to right, one column per stage. In-region members are buttons. */
+function EvolutionLine({ details, pokemon, selected, onSelect }: EvolutionLineProps) {
+  const inRegion = useMemo(() => new Set(pokemon.map((p) => p.id)), [pokemon]);
+  const { evolution } = details;
+
+  return (
+    <section className="dex-screen__evolution" aria-label="Evolution line">
+      <span className="dex-screen__card-label">Evolution line</span>
+      {evolution.length <= 1 ? (
+        <p className="dex-screen__fineprint">{formatName(selected.name)} doesn&apos;t evolve.</p>
+      ) : (
+        <ol className="dex-screen__stages">
+          {evolution.map((stage, i) => (
+            <li key={i} className={`dex-screen__stage${stage.length > 2 ? ' dex-screen__stage--branch' : ''}`}>
+              {stage.map((member) => {
+                // By species, so Mega Charizard X still lights up Charizard.
+                const current = member.id === selected.species;
+                const body = (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- pixel sprite, see SpriteScreen */}
+                    <img className="dex-screen__evo-sprite" src={member.sprite} alt="" width={56} height={56} />
+                    <span className="dex-screen__evo-name">{formatName(member.name)}</span>
+                    {member.condition && <span className="dex-screen__evo-how">{member.condition}</span>}
+                  </>
+                );
+                const className = `dex-screen__evo${current ? ' dex-screen__evo--current' : ''}`;
+                return inRegion.has(member.id) && member.id !== selected.id ? (
+                  <button key={member.id} type="button" className={className} onClick={() => onSelect(member.id)}>
+                    {body}
+                  </button>
+                ) : (
+                  <span key={member.id} className={className} aria-current={current ? 'true' : undefined}>
+                    {body}
+                  </span>
+                );
+              })}
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
+}
+
+/** Megas, regional forms and the like. Forms that play differently are in
+ *  the entry list too, so their cards jump there; cosmetic ones aren't. */
+function FormList({ details, pokemon, selected, onSelect }: EvolutionLineProps) {
+  const entryIds = useMemo(() => new Map(pokemon.map((p) => [p.name, p.id])), [pokemon]);
+  const { forms } = details;
+  if (forms.length <= 1) return null;
+  const baseTotal = forms.find((f) => f.isDefault)?.total ?? forms[0].total;
+
+  return (
+    <section className="dex-screen__evolution" aria-label="Forms">
+      <span className="dex-screen__card-label">Forms</span>
+      <div className="dex-screen__forms">
+        {forms.map((form) => {
+          const current = form.name === selected.name;
+          const entryId = entryIds.get(form.name);
+          const delta = form.total - baseTotal;
+          const body = (
+            <>
+              {form.sprite ? (
+                // eslint-disable-next-line @next/next/no-img-element -- pixel sprite, see SpriteScreen
+                <img className="dex-screen__evo-sprite" src={form.sprite} alt="" width={56} height={56} />
+              ) : (
+                <span className="dex-screen__evo-sprite" aria-hidden="true" />
+              )}
+              <span className="dex-screen__evo-name">{form.label}</span>
+              <span className="dex-screen__form-types">
+                {form.types.map((type) => (
+                  <TypeDot key={type} type={type} size="small" />
+                ))}
+              </span>
+              <span className="dex-screen__evo-how">
+                {form.types.map(capitalize).join(' / ')}
+                <br />
+                Total {form.total}
+                {delta !== 0 && ` (${delta > 0 ? '+' : ''}${delta})`}
+              </span>
+              {form.mega && <span className="dex-screen__tag dex-screen__tag--strong">Mega</span>}
+            </>
+          );
+          const className = `dex-screen__evo${current ? ' dex-screen__evo--current' : ''}`;
+          return entryId !== undefined && !current ? (
+            <button key={form.name} type="button" className={className} onClick={() => onSelect(entryId)}>
+              {body}
+            </button>
+          ) : (
+            <span key={form.name} className={className} aria-current={current ? 'true' : undefined}>
+              {body}
+            </span>
+          );
+        })}
+      </div>
+    </section>
+  );
 }
 
 /** "scarlet-violet" -> "Scarlet / Violet" */
@@ -314,7 +435,7 @@ function RankTab({ generation, pokemon, selected, onSelect }: RankTabProps) {
         <span className="dex-screen__card-label">Nearest by total</span>
         {ranking.nearest.map((p) => (
           <button key={p.id} type="button" className="dex-screen__near" onClick={() => onSelect(p.id)}>
-            <span className="dex-screen__near-number">{formatDexNumber(p.id)}</span>
+            <span className="dex-screen__near-number">{formatDexNumber(p.species)}</span>
             <span className="dex-screen__near-name">{formatName(p.name)}</span>
             <span className="dex-screen__near-total">{p.total}</span>
           </button>
@@ -356,7 +477,7 @@ function VsTab({ pokemon, selected, rival, onRival, onSwap }: VsTabProps) {
           <select className="dex-screen__vs-select" value={rival.id} onChange={(e) => onRival(Number(e.target.value))}>
             {pokemon.map((p) => (
               <option key={p.id} value={p.id}>
-                {formatDexNumber(p.id)} {formatName(p.name)}
+                {formatDexNumber(p.species)} {formatName(p.name)}
               </option>
             ))}
           </select>

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import { useMemo, useState, type KeyboardEvent } from 'react';
@@ -21,11 +21,13 @@ export function FieldDex({ generation, pokemon }: FieldDexProps) {
   const [selectedId, setSelectedId] = useState(() =>
     pokemon.some((p) => p.id === PIKACHU_ID) ? PIKACHU_ID : pokemon[0].id,
   );
-  // The VS tab's opponent starts as the next entry (Pikachu vs Raichu) and
-  // stays put while you browse, so one rival can face the whole region.
+  // The VS tab's opponent starts as the next species (Pikachu vs Raichu,
+  // skipping Pikachu's own forms) and stays put while you browse, so one
+  // rival can face the whole region.
   const [rivalId, setRivalId] = useState(() => {
     const at = pokemon.findIndex((p) => p.id === selectedId);
-    return pokemon[(at + 1) % pokemon.length].id;
+    const next = pokemon.slice(at + 1).find((p) => p.species !== pokemon[at].species);
+    return (next ?? pokemon[0]).id;
   });
   const [tab, setTab] = useState<Tab>('stats');
   const [query, setQuery] = useState('');
@@ -164,10 +166,10 @@ export function FieldDex({ generation, pokemon }: FieldDexProps) {
         </div>
         <div className="field-dex__jumps">
           <button type="button" className="field-dex__jump" aria-label="First entry" onClick={() => setSelectedId(first.id)}>
-            {formatDexNumber(first.id)}
+            {formatDexNumber(first.species)}
           </button>
           <button type="button" className="field-dex__jump" aria-label="Last entry" onClick={() => setSelectedId(last.id)}>
-            {formatDexNumber(last.id)}
+            {formatDexNumber(last.species)}
           </button>
         </div>
       </div>

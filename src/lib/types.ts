@@ -32,7 +32,11 @@ export const STAT_SHORT_LABELS: Record<StatKey, string> = {
 };
 
 export interface Pokemon {
+  /** PokeAPI's id: the dex number for a species' default form, 10001+ for
+   *  alternate forms (megas, regional forms...). Unique per entry. */
   id: number;
+  /** National Pokédex number - shared by a species and all its forms. */
+  species: number;
   name: string;
   types: string[];
   primaryType: string;
@@ -74,8 +78,36 @@ export interface Move {
   accuracy: number | null;
 }
 
+export interface EvolutionMember {
+  id: number;
+  name: string;
+  /** Still front sprite - every species has one, unlike the animated GIFs. */
+  sprite: string;
+  /** How it evolves from the stage before, e.g. "Lv 16" or "Fire Stone". Null for the base form. */
+  condition: string | null;
+}
+
+export interface PokemonForm {
+  /** API name, e.g. "charizard-mega-x". */
+  name: string;
+  /** Display name without the species, e.g. "Mega X", "Gigantamax", "10%". */
+  label: string;
+  sprite: string | null;
+  types: string[];
+  total: number;
+  /** The form the rest of the dex shows for this species. */
+  isDefault: boolean;
+  mega: boolean;
+}
+
 export interface PokemonDetails {
   id: number;
+  /** Every variety of the species (megas, regional forms...), default first.
+   *  A single entry means the species has no alternate forms. */
+  forms: PokemonForm[];
+  /** The evolution line by stage: [[Bulbasaur], [Ivysaur], [Venusaur]].
+   *  Branching lines put every branch in one stage: Eevee's has eight. */
+  evolution: EvolutionMember[][];
   abilities: Ability[];
   /** The rarest ability (fewest holders) - this Pokémon's calling card. */
   signature: string;

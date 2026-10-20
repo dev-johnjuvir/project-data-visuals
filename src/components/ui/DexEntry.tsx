@@ -22,7 +22,7 @@ export function DexEntry({ pokemon, selected, dimmed, onSelect }: DexEntryProps)
       <span className="dex-entry__caret" aria-hidden="true">
         {selected ? '▶' : ''}
       </span>
-      <span className="dex-entry__number">{formatDexNumber(pokemon.id)}</span>
+      <span className="dex-entry__number">{formatDexNumber(pokemon.species)}</span>
       <span className="dex-entry__name">{formatName(pokemon.name)}</span>
       <TypeDot type={pokemon.primaryType} size="small" />
     </button>

@@ -20,7 +20,8 @@ export function filterEntries(pokemon: Pokemon[], query: string, type: string | 
   return pokemon.filter((p) => {
     if (type && !p.types.includes(type)) return false;
     if (!q) return true;
-    if (asNumber !== null) return String(p.id).startsWith(asNumber);
+    // By dex number, so "6" finds Charizard and both its megas.
+    if (asNumber !== null) return String(p.species).startsWith(asNumber);
     // Match the name as displayed ("mr. mime") and as the API spells it ("mr-mime").
     return formatName(p.name).toLowerCase().includes(q) || p.name.includes(q);
   });

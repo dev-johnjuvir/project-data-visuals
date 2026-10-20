@@ -50,6 +50,8 @@ $tablet: $breakpoint-dex-wide;
   }
 
   @include from($tablet) {
+    // The screen is wider so STATS fits its radar and bars side by side;
+    // the row stretches both panels to the same height (see __list).
     grid-template-columns: minmax(96px, 150px) minmax(0, 1.4fr) minmax(0, 1fr) minmax(96px, 150px);
     grid-template-areas:
       'top top top top'
@@ -159,6 +161,14 @@ $tablet: $breakpoint-dex-wide;
   &__list {
     grid-area: list;
     min-width: 0;
+
+    // Side by side, the screen alone sets the row's height: size containment
+    // makes the list count as zero height, then it stretches to fill the row
+    // and scrolls inside. Without it, 150 entries would stretch the row (and
+    // the screen's bezel) far past the LCD.
+    @include from($tablet) {
+      contain: size;
+    }
   }
 
   &__pad-area {

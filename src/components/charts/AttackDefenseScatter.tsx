@@ -53,7 +53,7 @@ export function AttackDefenseScatter({ pokemon, highlight, selected, onSelect }:
         {ordered.map((p) => {
           const isSelected = p.id === selected.id;
           const isLit = highlight === null || p.primaryType === highlight;
-          const label = `${formatDexNumber(p.id)} ${formatName(p.name)}, Attack ${p.stats.attack}, Defense ${p.stats.defense}`;
+          const label = `${formatDexNumber(p.species)} ${formatName(p.name)}, Attack ${p.stats.attack}, Defense ${p.stats.defense}`;
           const modifiers = [
             isSelected && 'scatter__dot--selected',
             !isSelected && !isLit && 'scatter__dot--dimmed',
