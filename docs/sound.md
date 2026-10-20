@@ -51,7 +51,8 @@ At the top of `lib/sfx.ts`:
 
 - `SOUNDS`: `[frequency Hz, duration ms]` per note. Higher frequency means a higher
   pitch. Doubling a frequency raises it one octave.
-- `VOLUME` (0.05): square waves are harsh, so keep it low. 0.08 is already loud.
+- `VOLUME`: per sound (button 0.08, scroll 0.07, select 0.05). Square waves are
+  harsh, so keep them low; 0.1 is already loud.
 - `SCROLL_GAP_MS` (60): the minimum gap between ticks.
 
 To add a sound, see [Recipes](recipes.md#add-a-sound).

@@ -35,11 +35,28 @@ Anything that needs `/api/dex/[id]` data renders through it.
 | `tab` | One of `TABS` (`DexScreen.tsx`): `stats`, `info`, `skills`, `rank`, `vs` |
 | `query`, `typeFilter` | List search and filter. They **don't** change the selection, and browsing still walks the whole region |
 | `rivalId` | VS opponent. Starts on the next *species* (Pikachu → Raichu) and stays put while you browse |
+| `build` (in `DexScreen`) | Stat-calculator level, nature, IVs and EVs. Kept across entries |
 
 Every control goes through a small handler that plays its sound and sets state:
 `select` (choose an entry), `jump` (first/last), `browse` (±1 entry, wraps),
 `changeTab` / `switchTab`, `changeType`, `changeRival`, `swap`, `random`. Pass
 these down as props, never the raw `setState`, so the sounds stay consistent.
+
+## Deep links and the URL
+
+`/dex/2?entry=172&tab=info` opens Region II on Pichu's INFO tab. `entry` is the
+entry's `id`, so forms work too (`?entry=10034`).
+
+- **Read after mount** (`useEffect` in `FieldDex`): the page is pre-built, so the
+  server can't see the query, and the first render has to match its HTML. Expect a
+  brief flash of the default entry before the linked one appears.
+- **The query is captured once, in a ref.** In dev, Strict Mode runs effects twice,
+  and the second run would otherwise read the URL after it had been rewritten.
+- **The URL follows the selection and tab** via `history.replaceState`, so any
+  entry can be shared, bookmarked or refreshed without filling the Back history.
+- **Evolution members from another region** (Pichu in Kanto's Pikachu line) are
+  links to their own region's dex with a "Region II" tag. `generationOf(dexNumber)`
+  in `lib/generations.ts` finds the region.
 
 ## Controls
 
@@ -58,7 +75,17 @@ arrows already have a job (`onKeyDown` in `FieldDex`).
 
 - **STATS:** a radar for shape plus bars for exact values. The bars use
   traffic-light bands: high ≥ 90, mid ≥ 60, low below that, on a fixed 0–255 scale.
+  Below them:
+  - **EV yield**: the EVs gained for defeating it ("Defeat it for +3 Sp. Atk").
+  - **Stat calculator** (`lib/statcalc.ts`): level, nature, IVs and EVs in, real
+    stats out, using the Gen III+ formulas. EVs are capped at 252 per stat and 510
+    in total. Shedinja's HP is always 1. Stats raised or lowered by the nature are
+    marked ▲ / ▼. The build is held in `DexScreen`, which stays mounted, so it
+    carries over as you browse.
 - **INFO:** height, weight, typing, best and lowest stat, total. Then, once loaded:
+  - **Pokédex entries**: the category ("The Mouse Pokémon"), then a timeline with
+    one entry per generation, newest first. Three are shown, plus "Show all N
+    generations".
   - the **evolution line**, left to right with ▶ between stages. A split stage
     stacks, and a big branch (Eevee's eight) becomes a two-column grid. Cards are
     highlighted by *species*, so a Mega lights up its base form.

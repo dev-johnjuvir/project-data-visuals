@@ -46,8 +46,14 @@
     background-color: var(--lcd);
     background-image: repeating-linear-gradient(0deg, rgba(27, 27, 47, 0.045) 0 2px, transparent 2px 4px);
 
+    // Desktop: grow with the window so the device fills it. 250px is
+    // everything above and below the LCD (page padding, top bar, bezels,
+    // casing); the clamp keeps today's 580px as the floor and stops huge
+    // monitors from getting a towering screen. The list panel follows, as
+    // the screen sets the row height (see .field-dex__list).
     @include from($breakpoint-dex-wide) {
-      height: 580px;
+      height: 580px; // browsers without dvh
+      height: clamp(580px, 100dvh - 250px, 920px);
     }
   }
 
@@ -231,6 +237,204 @@
   &__total-value {
     font-size: 24px;
     font-weight: 700;
+  }
+
+  &__ev-yield {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: space(2);
+    margin: 0;
+    font-family: $font-pixel;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  // --- Pokédex entries (INFO) ---------------------------------------------
+  // A timeline: one generation per row, a rule down the left joining them.
+
+  &__lore {
+    display: flex;
+    flex-direction: column;
+    gap: space(2);
+  }
+
+  &__genus {
+    @include pixel(19px, 700);
+    margin: 0;
+  }
+
+  &__lore-list {
+    display: flex;
+    flex-direction: column;
+    gap: space(3);
+    margin: 0;
+    padding: 0 0 0 space(3);
+    border-left: 3px solid var(--lcd-rule);
+    list-style: none;
+  }
+
+  &__lore-entry {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__lore-gen {
+    @include label(8px);
+    color: var(--text-soft);
+  }
+
+  &__lore-text {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  &__lore-games {
+    font-family: $font-pixel;
+    font-size: 13px;
+    color: var(--text-soft);
+  }
+
+  &__lore-more {
+    @include button-reset;
+    @include label(8px);
+    @include focus-ring;
+    align-self: flex-start;
+    min-height: 36px;
+    padding: 0 space(3);
+    border: 2px solid var(--ink);
+    border-radius: 8px;
+    background: var(--lcd-card);
+    color: var(--ink);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--paper);
+    }
+  }
+
+  // --- Stat calculator (under STATS) -------------------------------------
+
+  &__calc {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: space(4);
+    padding: space(3);
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    background: var(--lcd-card);
+  }
+
+  &__calc-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: space(2);
+  }
+
+  &__calc-field {
+    @include label(8px);
+    display: flex;
+    flex-direction: column;
+    gap: space(1);
+    line-height: 1.5;
+    color: var(--text-soft);
+
+    &--nature {
+      flex: 1 1 180px;
+    }
+  }
+
+  &__calc-input {
+    @include pixel(16px, 600);
+    @include focus-ring;
+    width: 100%;
+    min-width: 0;
+    min-height: 36px;
+    padding: 0 6px;
+    border: 2px solid var(--ink);
+    border-radius: 6px;
+    background: var(--paper);
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  // The level box sits beside the nature menu; keep it narrow.
+  &__calc-field:not(&__calc-field--nature) &__calc-input {
+    width: 72px;
+  }
+
+  &__calc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: $font-pixel;
+    font-size: 15px;
+
+    th,
+    td {
+      padding: 3px space(1);
+      text-align: left;
+    }
+
+    thead th {
+      @include label(8px);
+      color: var(--text-soft);
+    }
+
+    tbody th {
+      font-weight: 600;
+    }
+
+    // IV and EV columns: compact number boxes.
+    td:nth-child(2) {
+      width: 64px;
+    }
+
+    td:nth-child(3) {
+      width: 76px;
+    }
+
+    // Results line up on the right, like the move table's numbers.
+    th:last-child,
+    td:last-child {
+      text-align: right;
+    }
+  }
+
+  &__calc-result {
+    font-size: 18px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+
+    &--up {
+      color: var(--up);
+    }
+
+    &--down {
+      color: var(--down);
+    }
+  }
+
+  &__calc-mark {
+    margin-left: 3px;
+    font-size: 11px;
+  }
+
+  &__calc-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: space(2);
+    font-family: $font-pixel;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  // Exactly 510: the spread is complete.
+  &__calc-full {
+    color: var(--up);
   }
 
   // --- INFO and RANK cards -----------------------------------------------
@@ -616,12 +820,20 @@
     text-align: center;
 
     // Only in-region members are buttons; the rest are plain cards.
-    @at-root button#{&} {
+    // Only in-region members (buttons) and other-region members (links to
+    // that region's dex) are interactive; the rest are plain cards.
+    @at-root button#{&},
+      a#{&} {
       cursor: pointer;
+      text-decoration: none;
 
       &:hover {
         background: var(--paper);
       }
+    }
+
+    .dex-screen__tag {
+      margin-top: space(1);
     }
 
     &--current {

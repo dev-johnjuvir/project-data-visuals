@@ -43,6 +43,8 @@ export interface Pokemon {
   stats: Record<StatKey, number>;
   /** Base stat total (sum of the six stats). */
   total: number;
+  /** EVs gained for defeating it - only the non-zero stats, e.g. { 'special-attack': 3 }. */
+  evYield: Partial<Record<StatKey, number>>;
   /** Animated GIF when one exists, otherwise a still sprite. */
   sprite: string | null;
   /** The cry, as a small .ogg file. Downloaded only when someone presses play. */
@@ -100,8 +102,21 @@ export interface PokemonForm {
   mega: boolean;
 }
 
+/** One generation's Pokédex entry: its newest text, and every game of that
+ *  generation that has an entry. */
+export interface LoreEntry {
+  /** Roman numeral, e.g. "VIII". */
+  generation: string;
+  games: string[];
+  text: string;
+}
+
 export interface PokemonDetails {
   id: number;
+  /** The species category, e.g. "Mouse Pokémon". Empty if the API has none. */
+  genus: string;
+  /** Pokédex entries in English, one per generation, newest first. */
+  lore: LoreEntry[];
   /** Every variety of the species (megas, regional forms...), default first.
    *  A single entry means the species has no alternate forms. */
   forms: PokemonForm[];

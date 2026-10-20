@@ -4,7 +4,7 @@
 
 import { fetchApi, inBatches, toPokemon, type ApiPokemon } from './pokeapi';
 import { capitalize, formatName } from './transforms';
-import type { Ability, EvolutionMember, Move, MoveCategory, PokemonDetails, PokemonForm } from './types';
+import type { Ability, EvolutionMember, LoreEntry, Move, MoveCategory, PokemonDetails, PokemonForm } from './types';
 
 const LAST_DEX_ID = 1025;
 
@@ -44,6 +44,57 @@ interface ApiSpecies {
   name: string;
   evolution_chain: { url: string } | null;
   varieties: { is_default: boolean; pokemon: Named }[];
+  genera: { genus: string; language: Named }[];
+  flavor_text_entries: { flavor_text: string; language: Named; version: Named }[];
+}
+
+/** Game names with their own capitalisation. */
+const GAME_WORDS: Record<string, string> = {
+  lets: "Let's",
+  firered: 'FireRed',
+  leafgreen: 'LeafGreen',
+  heartgold: 'HeartGold',
+  soulsilver: 'SoulSilver',
+};
+
+/** "lets-go-pikachu" -> "Let's Go Pikachu", "omega-ruby" -> "Omega Ruby" */
+const formatVersion = (name: string) =>
+  name
+    .split('-')
+    .map((word) => GAME_WORDS[word] ?? capitalize(word))
+    .join(' ');
+
+/** "generation-viii" -> "VIII" */
+const generationNumeral = (name: string) => name.replace('generation-', '').toUpperCase();
+
+/**
+ * The species' Pokédex entries, condensed to one per generation, newest
+ * first: each generation keeps its latest text and lists every game of that
+ * generation with an entry. Old games wrap text with hard line breaks and
+ * form feeds and spell it "POKéMON"; those are tidied.
+ */
+async function toLore(species: ApiSpecies): Promise<LoreEntry[]> {
+  const english = species.flavor_text_entries.filter((e) => e.language.name === 'en');
+  const generations = await Promise.all(english.map((e) => getVersionGeneration(e.version.name)));
+
+  // The API lists entries in release order, so a later entry overwrites an
+  // earlier one of the same generation: each generation ends on its newest.
+  const byGeneration = new Map<string, { games: string[]; text: string }>();
+  english.forEach((entry, i) => {
+    const generation = generations[i];
+    const text = entry.flavor_text
+      // A soft hyphen marks a word split across lines ("anger-ed"): rejoin it.
+      .replace(/\u00ad\s*/g, '')
+      .replace(/[\f\n\r]+/g, ' ')
+      .replace(/POKéMON/g, 'Pokémon')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const games = byGeneration.get(generation)?.games ?? [];
+    byGeneration.set(generation, { games: [...games, formatVersion(entry.version.name)], text });
+  });
+  return [...byGeneration]
+    .map(([generation, { games, text }]) => ({ generation, games, text }))
+    .reverse();
 }
 
 /** One way to evolve. Only the fields we describe; all optional in practice. */
@@ -73,7 +124,8 @@ type MoveInfo = Pick<Move, 'type' | 'category' | 'power' | 'accuracy'>;
 
 const abilityMemo = new Map<string, Promise<AbilityInfo>>();
 const moveMemo = new Map<string, Promise<MoveInfo>>();
-const gameOrderMemo = new Map<string, Promise<number>>();
+const versionGroupMemo = new Map<string, Promise<{ order: number; generation: string }>>();
+const versionMemo = new Map<string, Promise<string>>();
 const chainMemo = new Map<string, Promise<EvolutionMember[][]>>();
 
 function memoised<T>(memo: Map<string, Promise<T>>, key: string, load: () => Promise<T>): Promise<T> {
@@ -113,8 +165,22 @@ const getMove = (name: string) =>
 
 /** Release order of a version group. Not its id: late additions like
  *  "blue-japan" (1996) got high ids. */
-const getGameOrder = (name: string) =>
-  memoised(gameOrderMemo, name, async () => (await fetchApi<{ order: number }>(`version-group/${name}`)).order);
+/** A game group's release order and generation numeral. Order, not id:
+ *  late additions like "blue-japan" (1996) got high ids. */
+const getVersionGroup = (name: string) =>
+  memoised(versionGroupMemo, name, async () => {
+    const raw = await fetchApi<{ order: number; generation: Named }>(`version-group/${name}`);
+    return { order: raw.order, generation: generationNumeral(raw.generation.name) };
+  });
+
+const getGameOrder = async (name: string) => (await getVersionGroup(name)).order;
+
+/** Pokédex entries are tagged by single game ("red"); its group knows the generation. */
+const getVersionGeneration = (version: string) =>
+  memoised(versionMemo, version, async () => {
+    const raw = await fetchApi<{ version_group: Named }>(`version/${version}`);
+    return (await getVersionGroup(raw.version_group.name)).generation;
+  });
 
 const SPRITE_BASE = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon';
 
@@ -242,5 +308,7 @@ export async function getPokemonDetails(id: number): Promise<PokemonDetails> {
   }
   learnset ??= await getLearnset(raw);
 
-  return { id: raw.id, forms, evolution, abilities, signature, ...learnset };
+  const lore = await toLore(species);
+  const genus = species.genera.find((g) => g.language.name === 'en')?.genus ?? '';
+  return { id: raw.id, genus, lore, forms, evolution, abilities, signature, ...learnset };
 }

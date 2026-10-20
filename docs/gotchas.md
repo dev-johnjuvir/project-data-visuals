@@ -25,6 +25,12 @@ Each evolution step has several `evolution_details` entries (Leafeon: Moss Rock 
 older games, Leaf Stone in newer ones). Prefer the one with `is_default`, otherwise
 take the last.
 
+### Pokédex text needs cleaning
+Gen I–III entries contain hard line breaks, form feeds (`\f`) and "POKéMON". Gen II
+splits words across lines with a soft hyphen (`U+00AD`, as in "anger-ed"), which must be
+joined with **no** space. Entries are tagged by single game (`red`), not by
+generation; the generation comes from `/version/{name}` → its version group.
+
 ### Some sprites don't exist yet
 Brand-new forms (Mega Zygarde) can have `sprite: null`. Render a same-size empty
 box so the card keeps its shape.
@@ -45,6 +51,12 @@ A second `next dev` in the same folder refuses to start ("Another next dev serve
 is already running") and exits, even on a different port. Use the one that's
 already running.
 
+### Strict Mode runs effects twice in dev
+An effect that reads the URL while another effect rewrites it will read the
+*rewritten* URL on its second run. The Field Dex deep link opened on the default
+entry until the query was captured once in a ref. Production runs effects once,
+so this only shows in `next dev`, which is exactly why it's easy to miss.
+
 ### Suspense in production
 `DevSuspense` exists for a reason: a real `<Suspense>` boundary on a pre-built page
 ships the spinner in the static HTML. See [Architecture](architecture.md#loading-states).
@@ -60,6 +72,13 @@ When the browser sizes the grid row it measures a column flexbox's content, and 
 ### Narrow screen, long STATS tab
 At 1× width the STATS radar and bars wrap onto separate rows, and only two bars fit
 in the LCD. The screen column is 1.4× on purpose.
+
+### Pixelify's 5 and 8 look alike
+At UI sizes Pixelify Sans draws 5 like an S, so "#005" and "#008" blur together.
+Digits come from a separate digits-only font (see [Styling](styling.md#tokens)).
+If you change fonts, check that numbers stay readable. With `next/font/local` +
+`unicode-range`, keep `adjustFontFallback: false`: the generated metric fallback
+has no `unicode-range`, so it would take over the letters too.
 
 ### Sass escapes in generated code
 `content: '\25B6'` written from a Python string came out as a raw control

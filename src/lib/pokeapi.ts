@@ -16,7 +16,7 @@ export interface ApiPokemon {
   name: string;
   species: { url: string };
   types: { slot: number; type: { name: string } }[];
-  stats: { base_stat: number; stat: { name: string } }[];
+  stats: { base_stat: number; effort: number; stat: { name: string } }[];
   height: number;
   weight: number;
   cries?: { latest: string | null; legacy: string | null };
@@ -55,6 +55,10 @@ export function toPokemon(raw: ApiPokemon): Pokemon {
     primaryType: types[0],
     stats,
     total: STAT_KEYS.reduce((sum, key) => sum + stats[key], 0),
+    // Sparse: most stats yield 0, and this ships with every entry.
+    evYield: Object.fromEntries(
+      raw.stats.filter((s) => s.effort > 0).map((s) => [s.stat.name, s.effort]),
+    ) as Pokemon['evYield'],
     sprite: pickSprite(raw.sprites),
     // Every Pokémon has a modern "latest" cry; the original 8-bit "legacy"
     // ones exist only for older generations.

@@ -43,6 +43,11 @@ that depends on a different element uses `@at-root` or a compound selector (see
   Sans, headings and numbers), `$font-label` (Press Start 2P, tiny caps labels),
   `$font-body` (M PLUS Rounded 1c). Use the `pixel($size, $weight)` and
   `label($size)` mixins.
+- `$font-pixel` starts with `--font-digits`: a digits-only subset of **Jersey 10**
+  (`src/fonts/`, OFL licence alongside). It carries `unicode-range: U+0030-0039`,
+  so the browser uses it for 0–9 and Pixelify for everything else. That's because
+  Pixelify's 5 looks like an S and is hard to tell from 8. Its `size-adjust`
+  (118%) in `layout.tsx` matches the digit height to Pixelify.
 
 ## The data-to-CSS bridge (`lib/style.ts`)
 

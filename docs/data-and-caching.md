@@ -39,6 +39,7 @@ request retries.
 | `types`, `primaryType` | Slot order. `primaryType` drives the colour |
 | `stats`, `total` | The six base stats and their sum |
 | `sprite` | Best animated GIF (Showdown → B/W animated → still sprite) |
+| `evYield` | EVs gained for defeating it, **non-zero stats only** (`{ 'special-attack': 3 }`) to keep the page small. Comes free with `/pokemon/{id}` (`stats[].effort`) |
 | `cry`, `height`, `weight` | Height in decimetres, weight in hectograms, as the API sends them |
 
 ### Alternate forms
@@ -68,6 +69,7 @@ histograms stay one-per-species.
 | `signature` | derived | The rarest ability (fewest holders). Ties go to the earlier slot |
 | `moves`, `versionGroup` | `/pokemon/{id}` + `/move/{name}` + `/version-group/{name}` | Level-up moves from the **newest game by release `order`** (not by id; see [Gotchas](gotchas.md)) |
 | `evolution` | `/pokemon-species` + `/evolution-chain` | Stages breadth-first. Each member has a condition string ("Lv 16", "Fire Stone", "Trade holding Metal Coat") |
+| `genus`, `lore` | species `genera` + `flavor_text_entries`, + `/version/{name}` → `/version-group` for each game's generation | Pokédex entries in English, **one per generation** (its newest text, plus every game of that generation with an entry), newest first. Old games' line breaks, soft-hyphen word splits and "POKéMON" are tidied |
 | `forms` | species `varieties` + `/pokemon/{variety}` | Every variety, default first, with label, types, total and a `mega` flag |
 
 Rules worth knowing:

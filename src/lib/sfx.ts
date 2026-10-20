@@ -19,8 +19,13 @@ const SOUNDS: Record<Sfx, [number, number][]> = {
   scroll: [[1319, 18]], // E6: a short cursor tick
 };
 
-/** Square waves are loud - keep the whole thing quiet. */
-const VOLUME = 0.05;
+/** Square waves are harsh, so keep these low; 0.1 is already loud. The short
+ *  button and scroll blips get a bit more than the longer two-note select. */
+const VOLUME: Record<Sfx, number> = {
+  button: 0.08,
+  select: 0.05,
+  scroll: 0.07,
+};
 /** Wheel and key-repeat fire fast; don't stack ticks closer than this. */
 const SCROLL_GAP_MS = 60;
 const STORAGE_KEY = 'field-dex-muted';
@@ -89,7 +94,7 @@ export function playSfx(name: Sfx) {
     osc.type = 'square';
     osc.frequency.value = frequency;
     // Instant attack, quick exponential fade: a crisp chip-tune blip.
-    gain.gain.setValueAtTime(VOLUME, at);
+    gain.gain.setValueAtTime(VOLUME[name], at);
     gain.gain.exponentialRampToValueAtTime(0.001, at + seconds);
     osc.connect(gain).connect(ctx.destination);
     osc.start(at);

@@ -25,6 +25,11 @@ export function getGeneration(id: number): Generation | undefined {
   return GENERATIONS.find((g) => g.id === id);
 }
 
+/** The region a National Dex number belongs to (forms share their species'). */
+export function generationOf(dexNumber: number): Generation | undefined {
+  return GENERATIONS.find((g) => dexNumber >= g.first && dexNumber <= g.last);
+}
+
 export function generationSize(gen: Generation): number {
   return gen.last - gen.first + 1;
 }

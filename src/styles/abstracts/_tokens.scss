@@ -78,7 +78,8 @@ $types: (
 );
 
 // Fonts come from next/font (see app/layout.tsx), exposed as CSS variables.
-$font-pixel: var(--font-pixel), monospace; // headings, numbers, buttons
+// --font-digits covers only 0-9 (clearer than Pixelify's 5/8); see layout.tsx.
+$font-pixel: var(--font-digits), var(--font-pixel), monospace; // headings, numbers, buttons
 $font-label: var(--font-label), monospace; // tiny all-caps 8-bit labels
 $font-body: var(--font-body), system-ui, sans-serif; // running text
 

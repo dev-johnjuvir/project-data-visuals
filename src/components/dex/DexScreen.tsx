@@ -1,8 +1,23 @@
-import { useMemo, type CSSProperties, type ReactNode } from 'react';
+import Link from 'next/link';
+import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { compareStats, formatHeight, formatWeight, rankEntry, statExtremes, type Side } from '@/lib/dex';
-import type { Generation } from '@/lib/generations';
+import { generationOf, type Generation } from '@/lib/generations';
 import { capitalize, formatDexNumber, formatName, formatPercent } from '@/lib/transforms';
-import { scrollSfxProps } from '@/lib/sfx';
+import { playSfx, scrollSfxProps } from '@/lib/sfx';
+import {
+  DEFAULT_BUILD,
+  MAX_EV,
+  MAX_EV_TOTAL,
+  MAX_IV,
+  NATURES,
+  calcStats,
+  clampIv,
+  clampLevel,
+  evTotal,
+  natureOf,
+  setEv,
+  type Build,
+} from '@/lib/statcalc';
 import { pct, typeStyle } from '@/lib/style';
 import { STAT_KEYS, STAT_LABELS, STAT_SHORT_LABELS, type MoveCategory, type Pokemon, type PokemonDetails } from '@/lib/types';
 import { CryButton } from '@/components/ui/CryButton';
@@ -39,6 +54,9 @@ interface DexScreenProps {
 /** The device's LCD: the scanned entry, with STATS / INFO / SKILLS / RANK / VS tabs. */
 export function DexScreen({ generation, pokemon, selected, rival, position, tab, onTab, onSelect, onRival, onSwap }: DexScreenProps) {
   const scrollSfx = useMemo(scrollSfxProps, []);
+  // Lives here, not in the tab: DexScreen stays mounted while you browse, so
+  // one build (level, nature, IVs, EVs) can be tried on entry after entry.
+  const [build, setBuild] = useState<Build>(DEFAULT_BUILD);
   return (
     <section className="dex-screen" aria-label="Entry screen">
       <div className="dex-screen__status" aria-hidden="true">
@@ -91,7 +109,7 @@ export function DexScreen({ generation, pokemon, selected, rival, position, tab,
           role="region"
           aria-label={`${tab} for ${formatName(selected.name)}`}
         >
-          {tab === 'stats' && <StatsTab selected={selected} />}
+          {tab === 'stats' && <StatsTab selected={selected} build={build} onBuild={setBuild} />}
           {tab === 'info' && <InfoTab pokemon={pokemon} selected={selected} onSelect={onSelect} />}
           {tab === 'skills' && <DetailsTab selected={selected} render={(details) => <SkillsTab details={details} />} />}
           {tab === 'rank' && <RankTab generation={generation} pokemon={pokemon} selected={selected} onSelect={onSelect} />}
@@ -109,8 +127,18 @@ export function DexScreen({ generation, pokemon, selected, rival, position, tab,
   );
 }
 
-function StatsTab({ selected }: { selected: Pokemon }) {
+interface StatsTabProps {
+  selected: Pokemon;
+  build: Build;
+  onBuild: (build: Build) => void;
+}
+
+function StatsTab({ selected, build, onBuild }: StatsTabProps) {
+  const evYield = STAT_KEYS.filter((key) => selected.evYield[key]).map(
+    (key) => `+${selected.evYield[key]} ${STAT_LABELS[key]}`,
+  );
   return (
+    <>
     <div className="dex-screen__stats">
       <div className="dex-screen__radar">
         <StatRadar pokemon={selected} />
@@ -135,8 +163,140 @@ function StatsTab({ selected }: { selected: Pokemon }) {
           <span className="dex-screen__total-label">Total</span>
           <span className="dex-screen__total-value">{selected.total}</span>
         </div>
+        {evYield.length > 0 && (
+          <p className="dex-screen__ev-yield">
+            <span className="dex-screen__card-label">EV yield</span> Defeat it for {evYield.join(', ')}
+          </p>
+        )}
       </div>
     </div>
+    <StatCalculator selected={selected} build={build} onBuild={onBuild} />
+    </>
+  );
+}
+
+/** A number box you can clear and retype: the parent gets every valid value
+ *  as you type (and clamps it), and the box shows the clamped value again
+ *  once you leave it. */
+function NumberField({ value, onChange, label, max }: { value: number; onChange: (n: number) => void; label: string; max: number }) {
+  const [draft, setDraft] = useState<string | null>(null);
+  return (
+    <input
+      type="number"
+      inputMode="numeric"
+      className="dex-screen__calc-input"
+      min={0}
+      max={max}
+      value={draft ?? value}
+      aria-label={label}
+      onChange={(e) => {
+        setDraft(e.target.value);
+        if (e.target.value !== '') onChange(Number(e.target.value));
+      }}
+      onBlur={() => setDraft(null)}
+    />
+  );
+}
+
+// Lesson: base stats compare species; the numbers you see in a game also
+// depend on level, nature, IVs (0-31, fixed per individual) and EVs (earned
+// by battling: 252 per stat, 510 in total). The up/down marks show the
+// nature's +10% / -10%.
+function StatCalculator({ selected, build, onBuild }: StatsTabProps) {
+  const stats = calcStats(selected, build);
+  const nature = natureOf(build.nature);
+  const total = evTotal(build.evs);
+  const update = (patch: Partial<Build>) => onBuild({ ...build, ...patch });
+
+  return (
+    <section className="dex-screen__calc" aria-label="Stat calculator">
+      <span className="dex-screen__card-label">Stat calculator</span>
+      <div className="dex-screen__calc-controls">
+        <label className="dex-screen__calc-field">
+          Level
+          <NumberField value={build.level} max={100} label="Level" onChange={(n) => update({ level: clampLevel(n) })} />
+        </label>
+        <label className="dex-screen__calc-field dex-screen__calc-field--nature">
+          Nature
+          <select
+            className="dex-screen__calc-input"
+            value={build.nature}
+            onChange={(e) => {
+              playSfx('button');
+              update({ nature: e.target.value });
+            }}
+          >
+            {NATURES.map((x) => (
+              <option key={x.name} value={x.name}>
+                {x.name}
+                {x.up && x.down ? ` (+${STAT_SHORT_LABELS[x.up]} -${STAT_SHORT_LABELS[x.down]})` : ' (neutral)'}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <table className="dex-screen__calc-table">
+        <thead>
+          <tr>
+            <th scope="col">Stat</th>
+            <th scope="col">IV</th>
+            <th scope="col">EV</th>
+            <th scope="col">Lv {build.level}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {STAT_KEYS.map((key) => {
+            const mark = nature.up === key ? 'up' : nature.down === key ? 'down' : null;
+            return (
+              <tr key={key}>
+                <th scope="row">{STAT_SHORT_LABELS[key]}</th>
+                <td>
+                  <NumberField
+                    value={build.ivs[key]}
+                    max={MAX_IV}
+                    label={`${STAT_LABELS[key]} IV`}
+                    onChange={(n) => update({ ivs: { ...build.ivs, [key]: clampIv(n) } })}
+                  />
+                </td>
+                <td>
+                  <NumberField
+                    value={build.evs[key]}
+                    max={MAX_EV}
+                    label={`${STAT_LABELS[key]} EV`}
+                    onChange={(n) => update({ evs: setEv(build.evs, key, n) })}
+                  />
+                </td>
+                <td className={`dex-screen__calc-result${mark ? ` dex-screen__calc-result--${mark}` : ''}`}>
+                  {stats[key]}
+                  {mark && (
+                    <span className="dex-screen__calc-mark" aria-label={mark === 'up' ? 'raised by nature' : 'lowered by nature'}>
+                      {mark === 'up' ? '▲' : '▼'}
+                    </span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+
+      <div className="dex-screen__calc-foot">
+        <span className={total === MAX_EV_TOTAL ? 'dex-screen__calc-full' : undefined}>
+          EVs {total} / {MAX_EV_TOTAL}
+        </span>
+        <button
+          type="button"
+          className="dex-screen__retry"
+          onClick={() => {
+            playSfx('button');
+            onBuild(DEFAULT_BUILD);
+          }}
+        >
+          Reset
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -173,6 +333,7 @@ function InfoTab({ pokemon, selected, onSelect }: InfoTabProps) {
         selected={selected}
         render={(details) => (
           <>
+            <Lore details={details} />
             <EvolutionLine details={details} pokemon={pokemon} selected={selected} onSelect={onSelect} />
             <FormList details={details} pokemon={pokemon} selected={selected} onSelect={onSelect} />
             <Abilities details={details} />
@@ -205,6 +366,50 @@ function DetailsTab({ selected, render }: { selected: Pokemon; render: (details:
     );
   }
   return render(state.details);
+}
+
+/** Newest generations shown before "show all". */
+const LORE_PREVIEW = 3;
+
+/** The Pokédex entries: one per generation, newest first, as a timeline. */
+function Lore({ details }: { details: PokemonDetails }) {
+  const [expanded, setExpanded] = useState(false);
+  const { genus, lore } = details;
+  if (lore.length === 0 && !genus) return null;
+  const shown = expanded ? lore : lore.slice(0, LORE_PREVIEW);
+
+  return (
+    <section className="dex-screen__lore" aria-label="Pokédex entries">
+      <span className="dex-screen__card-label">Pokédex entries</span>
+      {genus && <p className="dex-screen__genus">The {genus}</p>}
+      {lore.length === 0 ? (
+        <p className="dex-screen__fineprint">No Pokédex entry on record yet.</p>
+      ) : (
+        <ol className="dex-screen__lore-list">
+          {shown.map((entry) => (
+            <li key={entry.generation} className="dex-screen__lore-entry">
+              <span className="dex-screen__lore-gen">Gen {entry.generation}</span>
+              <p className="dex-screen__lore-text">{entry.text}</p>
+              <span className="dex-screen__lore-games">{entry.games.join(' / ')}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+      {lore.length > LORE_PREVIEW && (
+        <button
+          type="button"
+          className="dex-screen__lore-more"
+          aria-expanded={expanded}
+          onClick={() => {
+            playSfx('button');
+            setExpanded(!expanded);
+          }}
+        >
+          {expanded ? 'Show fewer' : `Show all ${lore.length} generations`}
+        </button>
+      )}
+    </section>
+  );
 }
 
 interface EvolutionLineProps {
@@ -240,11 +445,30 @@ function EvolutionLine({ details, pokemon, selected, onSelect }: EvolutionLinePr
                   </>
                 );
                 const className = `dex-screen__evo${current ? ' dex-screen__evo--current' : ''}`;
-                return inRegion.has(member.id) && member.id !== selected.id ? (
-                  <button key={member.id} type="button" className={className} onClick={() => onSelect(member.id)}>
-                    {body}
-                  </button>
-                ) : (
+                if (inRegion.has(member.id) && member.id !== selected.id) {
+                  return (
+                    <button key={member.id} type="button" className={className} onClick={() => onSelect(member.id)}>
+                      {body}
+                    </button>
+                  );
+                }
+                // From another region (Pichu, in Pikachu's line): open that
+                // region's dex on it, on this same tab.
+                const home = inRegion.has(member.id) ? undefined : generationOf(member.id);
+                if (home) {
+                  return (
+                    <Link
+                      key={member.id}
+                      href={`/dex/${home.id}?entry=${member.id}&tab=info`}
+                      className={className}
+                      onClick={() => playSfx('select')}
+                    >
+                      {body}
+                      <span className="dex-screen__tag">Region {home.numeral}</span>
+                    </Link>
+                  );
+                }
+                return (
                   <span key={member.id} className={className} aria-current={current ? 'true' : undefined}>
                     {body}
                   </span>

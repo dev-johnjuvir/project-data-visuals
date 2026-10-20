@@ -62,6 +62,7 @@ src/
     transforms.ts, dex.ts         pure data shaping (charts / Field Dex)
     style.ts                      data -> CSS custom properties
     sfx.ts                        8-bit sound effects + mute state
+    statcalc.ts                   natures + actual-stat formulas (STATS calculator)
     generations.ts, metadata.ts, og*.tsx, brand.ts
   styles/                         Sass: abstracts/, base/, components/, main.scss
 docs/                             this wiki

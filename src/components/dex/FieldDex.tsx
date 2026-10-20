@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState, type KeyboardEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { filterEntries, typesInUse } from '@/lib/dex';
 import type { Generation } from '@/lib/generations';
 import { playSfx, setMuted, useMuted } from '@/lib/sfx';
@@ -44,6 +44,31 @@ export function FieldDex({ generation, pokemon }: FieldDexProps) {
   const last = pokemon[pokemon.length - 1];
 
   const muted = useMuted();
+
+  // Deep links: /dex/2?entry=172&tab=info opens on Pichu's INFO tab - how
+  // an evolution card links to a Pokémon in another region. Read after
+  // mount, not during render: the page is pre-built, so the server can't
+  // know the query and the first render must match its HTML.
+  // The query is captured once: in dev, Strict Mode runs effects twice, and
+  // by the second run the effect below has already rewritten the URL.
+  const linkedQuery = useRef<string | null>(null);
+  useEffect(() => {
+    linkedQuery.current ??= window.location.search;
+    const params = new URLSearchParams(linkedQuery.current);
+    const entry = Number(params.get('entry'));
+    const linkedTab = params.get('tab') as Tab | null;
+    if (pokemon.some((p) => p.id === entry)) setSelectedId(entry);
+    if (linkedTab && TABS.includes(linkedTab)) setTab(linkedTab);
+  }, [pokemon]);
+
+  // ...and keep the URL in step, so any entry can be shared or bookmarked.
+  // replaceState: browsing shouldn't fill the Back button's history.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('entry', String(selectedId));
+    url.searchParams.set('tab', tab);
+    window.history.replaceState(window.history.state, '', url);
+  }, [selectedId, tab]);
 
   // Every control goes through these, so each makes its sound in one place:
   // "scroll" moves the cursor, "button" presses a control, "select" picks
