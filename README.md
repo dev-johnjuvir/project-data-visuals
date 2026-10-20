@@ -49,15 +49,21 @@ Interaction rules applied throughout:
 (the charts page links to it with **Open the Field Dex**). It reuses the same server data,
 plus height, weight, an animated sprite and the cry:
 
-- **Screen:** the scanned entry with STATS (radar + traffic-light bars), INFO and RANK tabs.
-  The LCD is a fixed height; only the tab content scrolls, with a hidden scrollbar and a fade
-  at the bottom edge.
+- **Screen:** the scanned entry with five tabs. STATS (radar + traffic-light bars), INFO
+  (facts, evolution line, forms, abilities), SKILLS (level-up moves), RANK, and VS (compare
+  two Pokémon: overlaid radar + butterfly bars). The LCD is a fixed height; only the tab
+  content scrolls, with a hidden scrollbar and a fade at the bottom edge.
 - **Controls:** D-pad (↑↓ browse, ←→ tabs, and the arrow keys do the same), A = next tab,
   B = random, plus first/last jumps.
-- **List:** search by name or number (`#4`, `char`), filter by type in either slot.
+- **List:** search by name or number (`#4`, `char`), filter by type in either slot. Megas and
+  other forms that play differently are listed after their species.
+- **Sound:** 8-bit UI blips synthesised with Web Audio, with a mute toggle in the top bar.
 - **Layouts:** stacked on phones and portrait tablets, four columns from 1100px.
 - **Light by design:** sprites download one at a time for the entry on screen; cries
   (~7 KB `.ogg` files) download only when you press **Cry**.
+
+Developer docs for all of this (data flow, caching, layout, recipes and known traps) live
+in the **[wiki](docs/README.md)**.
 
 ## Metadata, previews and icons
 
